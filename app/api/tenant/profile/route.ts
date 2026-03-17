@@ -53,6 +53,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: {
+        uid: user.uid,
         name: userData?.name || user.name,
         email: userData?.email || user.email,
         phone: tenantData?.phone || userData?.phone,

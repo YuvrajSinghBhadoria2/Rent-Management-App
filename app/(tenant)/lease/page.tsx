@@ -71,12 +71,12 @@ export default function TenantLeasePage() {
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <h1 className="text-3xl font-bold tracking-tight">My Lease</h1>
-                {lease.agreementUrl && (
-                    <Button variant="outline">
+                <div className="flex gap-2">
+                    <Button variant="outline" onClick={() => window.open(`/api/leases/${lease.id}/agreement`, '_blank')}>
                         <Download className="mr-2 h-4 w-4" />
                         Download Agreement
                     </Button>
-                )}
+                </div>
             </div>
 
             <Card>
@@ -94,10 +94,9 @@ export default function TenantLeasePage() {
                         </div>
                         <div className="space-y-2">
                             <p className="text-sm text-muted-foreground">Status</p>
-                            <p className={`font-medium capitalize ${
-                                lease.status === 'active' ? 'text-green-600' : 
-                                lease.status === 'notice_period' ? 'text-orange-600' : 'text-gray-600'
-                            }`}>
+                            <p className={`font-medium capitalize ${lease.status === 'active' ? 'text-green-600' :
+                                    lease.status === 'notice_period' ? 'text-orange-600' : 'text-gray-600'
+                                }`}>
                                 {lease.status}
                             </p>
                         </div>

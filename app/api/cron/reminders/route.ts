@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
+import { sendEmail } from '@/lib/mailer';
+import {
+  RentDueReminderEmail,
+  OverdueAlertEmail,
+  RentIncrementNoticeEmail
+} from '@/emails';
+import { formatDate } from '@/lib/utils';
 
 function daysBetween(date1: Date, date2: Date): number {
   const diffTime = date2.getTime() - date1.getTime();
@@ -90,6 +97,19 @@ export async function GET(request: NextRequest) {
                   link: '/bills',
                   createdAt: FieldValue.serverTimestamp(),
                 });
+                if (tenantEmail) {
+                  await sendEmail({
+                    to: tenantEmail,
+                    subject: `Rent due in 7 days - ${bill.month} ${bill.year}`,
+                    react: RentDueReminderEmail({
+                      tenantName: tenant.name,
+                      amount: bill.totalAmount,
+                      dueDate: formatDate(dueDate),
+                      daysUntilDue: 7,
+                      billLink: `${process.env.NEXT_PUBLIC_APP_URL}/home`
+                    })
+                  });
+                }
                 await billRef.update({
                   sentReminders: FieldValue.arrayUnion('due_7'),
                 });
@@ -138,6 +158,18 @@ export async function GET(request: NextRequest) {
                   link: '/bills',
                   createdAt: FieldValue.serverTimestamp(),
                 });
+                if (tenantEmail) {
+                  await sendEmail({
+                    to: tenantEmail,
+                    subject: `URGENT: Rent Overdue`,
+                    react: OverdueAlertEmail({
+                      tenantName: tenant.name,
+                      amount: bill.totalAmount,
+                      daysOverdue: daysOverdue,
+                      billLink: `${process.env.NEXT_PUBLIC_APP_URL}/home`
+                    })
+                  });
+                }
                 await billRef.update({
                   sentReminders: FieldValue.arrayUnion('overdue_1'),
                 });

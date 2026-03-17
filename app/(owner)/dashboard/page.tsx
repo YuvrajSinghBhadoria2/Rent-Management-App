@@ -11,6 +11,8 @@ interface DashboardStats {
     pendingDues: number;
     openComplaints: number;
     rentCollected: number;
+    totalRooms: number;
+    vacantRooms: number;
 }
 
 export default function OwnerDashboard() {
@@ -21,6 +23,8 @@ export default function OwnerDashboard() {
         pendingDues: 0,
         openComplaints: 0,
         rentCollected: 0,
+        totalRooms: 0,
+        vacantRooms: 0,
     });
     const [isLoading, setIsLoading] = useState(true);
 
@@ -100,6 +104,37 @@ export default function OwnerDashboard() {
                 </Card>
 
                 <Card className="col-span-3">
+                    <CardHeader>
+                        <CardTitle>Room Occupancy</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        {isLoading ? (
+                            <div className="h-20 animate-pulse bg-muted rounded" />
+                        ) : (
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <div className="text-2xl font-bold">
+                                        {stats.totalRooms - stats.vacantRooms} / {stats.totalRooms}
+                                    </div>
+                                    <div className="text-sm text-muted-foreground">
+                                        {Math.round(((stats.totalRooms - stats.vacantRooms) / (stats.totalRooms || 1)) * 100)}% Occupied
+                                    </div>
+                                </div>
+                                <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+                                    <div
+                                        className="h-full bg-blue-600 transition-all"
+                                        style={{ width: `${((stats.totalRooms - stats.vacantRooms) / (stats.totalRooms || 1)) * 100}%` }}
+                                    />
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                    {stats.vacantRooms} rooms currently vacant
+                                </p>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+
+                <Card className="col-span-4">
                     <CardHeader>
                         <CardTitle>Quick Actions</CardTitle>
                     </CardHeader>

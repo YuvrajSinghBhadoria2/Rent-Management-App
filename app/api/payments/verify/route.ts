@@ -1,66 +1,52 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminDb } from '@/lib/firebase-admin';
-import { FieldValue } from 'firebase-admin/firestore';
-import crypto from 'crypto';
+import { verifyPayment } from '@/lib/payments';
+import { recordPayment } from '@/lib/payments/settlement';
 
 export async function POST(request: NextRequest) {
     try {
-        const {
-            razorpay_order_id,
-            razorpay_payment_id,
-            razorpay_signature,
-            billId
-        } = await request.json();
+        const body = await request.json();
+        const { orderId, gateway, razorpay_payment_id } = body;
 
-        if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature || !billId) {
-            return NextResponse.json({ error: 'Missing payment verification details' }, { status: 400 });
+        if (!orderId || !gateway) {
+            return NextResponse.json({ error: 'Missing orderId or gateway' }, { status: 400 });
         }
 
-        // Verify Signature
-        const secret = process.env.RAZORPAY_KEY_SECRET || '';
-        const body = razorpay_order_id + "|" + razorpay_payment_id;
-        const expectedSignature = crypto
-            .createHmac('sha256', secret)
-            .update(body.toString())
-            .digest('hex');
+        // For Razorpay, we can verify with the payment_id or rely on the signature (already done in client or here)
+        // Here we use the unified verifyPayment helper
+        const verification = await verifyPayment(gateway, orderId);
 
-        if (expectedSignature !== razorpay_signature) {
-            return NextResponse.json({ error: 'Invalid payment signature' }, { status: 400 });
+        if (verification.success) {
+            await recordPayment(orderId, razorpay_payment_id || verification.gatewayPaymentId);
+            return NextResponse.json({ success: true, message: 'Payment verified and recorded' });
+        } else {
+            return NextResponse.json({ error: 'Payment verification failed at gateway' }, { status: 400 });
         }
+    } catch (error: any) {
+        console.error('Payment Verification Error:', error);
+        return NextResponse.json({ error: error.message || 'Payment verification failed' }, { status: 500 });
+    }
+}
 
-        // 1. Update Bill Status
-        const billRef = adminDb.collection('bills').doc(billId);
-        const billDoc = await billRef.get();
+export async function GET(request: NextRequest) {
+    const { searchParams } = new URL(request.url);
+    const orderId = searchParams.get('orderId');
+    const gateway = searchParams.get('gateway') as any;
 
-        if (!billDoc.exists) {
-            return NextResponse.json({ error: 'Bill not found' }, { status: 404 });
+    if (!orderId || !gateway) {
+        return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/home?error=Missing details`);
+    }
+
+    try {
+        const verification = await verifyPayment(gateway, orderId);
+
+        if (verification.success) {
+            await recordPayment(orderId, verification.gatewayPaymentId);
+            return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/home?success=Payment recorded`);
+        } else {
+            return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/home?error=Verification failed`);
         }
-
-        await billRef.update({
-            status: 'paid',
-            paidAt: FieldValue.serverTimestamp(),
-            paymentMethod: 'razorpay',
-            razorpayPaymentId: razorpay_payment_id,
-            razorpayOrderId: razorpay_order_id,
-            updatedAt: FieldValue.serverTimestamp(),
-        });
-
-        // 2. Record in Payments collection (optional but good for history)
-        await adminDb.collection('payments').add({
-            billId,
-            tenantId: billDoc.data()?.tenantId,
-            ownerId: billDoc.data()?.ownerId,
-            amount: billDoc.data()?.totalAmount,
-            method: 'razorpay',
-            status: 'success',
-            razorpayPaymentId: razorpay_payment_id,
-            razorpayOrderId: razorpay_order_id,
-            createdAt: FieldValue.serverTimestamp(),
-        });
-
-        return NextResponse.json({ success: true, message: 'Payment verified successfully' });
     } catch (error) {
-        console.error('Error verifying payment:', error);
-        return NextResponse.json({ error: 'Payment verification failed' }, { status: 500 });
+        console.error('Redirect Verification Error:', error);
+        return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/home?error=System error`);
     }
 }

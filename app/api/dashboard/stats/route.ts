@@ -70,6 +70,21 @@ export async function GET(request: NextRequest) {
             rentCollected += doc.data().amount || 0;
         });
 
+        // 6. Total Rooms & Vacant Rooms
+        let totalRooms = 0;
+        let vacantRooms = 0;
+
+        for (const buildingDoc of buildingsSnap.docs) {
+            const roomsSnap = await buildingDoc.ref.collection('rooms').get();
+            totalRooms += roomsSnap.size;
+
+            roomsSnap.forEach(roomDoc => {
+                if (roomDoc.data().status === 'vacant') {
+                    vacantRooms++;
+                }
+            });
+        }
+
         return NextResponse.json({
             success: true,
             data: {
@@ -78,6 +93,8 @@ export async function GET(request: NextRequest) {
                 pendingDues,
                 openComplaints,
                 rentCollected,
+                totalRooms,
+                vacantRooms
             }
         });
     } catch (error) {

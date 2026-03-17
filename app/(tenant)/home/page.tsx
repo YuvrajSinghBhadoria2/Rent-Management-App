@@ -13,8 +13,20 @@ import {
     FileText,
     Download,
     CheckCircle2,
-    MessageSquare
+    MessageSquare,
+    Zap,
+    CreditCard as CreditCardIcon
 } from 'lucide-react';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+} from "@/components/ui/dialog";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -32,6 +44,9 @@ export default function TenantHomePage() {
     const [bills, setBills] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+    const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
+    const [selectedGateway, setSelectedGateway] = useState<string>('cashfree');
+    const [currentBill, setCurrentBill] = useState<any>(null);
 
     useEffect(() => {
         fetchBills();
@@ -55,62 +70,81 @@ export default function TenantHomePage() {
     const pendingBill = bills.find(b => b.status === 'pending' || b.status === 'overdue');
     const paidBills = bills.filter(b => b.status === 'paid');
 
-    const handlePayment = async (bill: any) => {
+    const handlePayment = async () => {
+        if (!currentBill) return;
         setIsProcessingPayment(true);
         try {
-            const res = await fetch('/api/payments/razorpay', {
+            const res = await fetch('/api/payments/create-order', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ billId: bill.id }),
+                body: JSON.stringify({
+                    billId: currentBill.id,
+                    gateway: selectedGateway
+                }),
             });
-            const { data, error } = await res.json();
+            const { data, error, success } = await res.json();
 
-            if (error) throw new Error(error);
+            if (!success) throw new Error(error);
 
-            // Load Razorpay script
-            const script = document.createElement('script');
-            script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-            script.async = true;
-            document.body.appendChild(script);
-
-            script.onload = () => {
-                const options = {
-                    key: data.razorpayKeyId,
-                    amount: data.amount,
-                    currency: data.currency,
-                    name: 'RentFlow',
-                    description: `Rent for ${bill.month} ${bill.year}`,
-                    order_id: data.orderId,
-                    handler: async (response: any) => {
-                        const verifyRes = await fetch('/api/payments/verify', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                ...response,
-                                billId: bill.id,
-                            }),
-                        });
-                        const verifyData = await verifyRes.json();
-
-                        if (verifyData.success) {
-                            toast.success('Payment successful!');
-                            fetchBills();
-                        } else {
-                            toast.error(verifyData.error || 'Payment verification failed');
-                        }
-                    },
-                    prefill: {
-                        name: user?.displayName || '',
-                        email: user?.email || '',
-                    },
-                    theme: {
-                        color: '#16a34a',
-                    },
+            if (selectedGateway === 'cashfree') {
+                const script = document.createElement('script');
+                script.src = 'https://sdk.cashfree.com/js/v3/cashfree.js';
+                script.async = true;
+                document.body.appendChild(script);
+                script.onload = () => {
+                    const cashfree = (window as any).Cashfree({
+                        mode: "sandbox", // TODO: Move to config
+                    });
+                    cashfree.checkout({
+                        paymentSessionId: data.cashfreeSessionId,
+                        redirectTarget: "_self",
+                    });
                 };
+            } else if (selectedGateway === 'phonepe') {
+                window.location.href = data.phonePeRedirectUrl;
+            } else if (selectedGateway === 'razorpay') {
+                const script = document.createElement('script');
+                script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+                script.async = true;
+                document.body.appendChild(script);
 
-                const rzp = new (window as any).Razorpay(options);
-                rzp.open();
-            };
+                script.onload = () => {
+                    const options = {
+                        key: data.razorpayKeyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+                        amount: data.amount,
+                        currency: 'INR',
+                        name: 'RentFlow',
+                        description: `Rent for ${currentBill.month} ${currentBill.year}`,
+                        order_id: data.razorpayOrderId,
+                        handler: async (response: any) => {
+                            const verifyRes = await fetch('/api/payments/verify', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    ...response,
+                                    orderId: data.orderId,
+                                    gateway: 'razorpay'
+                                }),
+                            });
+                            const verifyData = await verifyRes.json();
+                            if (verifyData.success) {
+                                toast.success('Payment successful!');
+                                setIsPaymentDialogOpen(false);
+                                fetchBills();
+                            } else {
+                                toast.error(verifyData.error || 'Payment verification failed');
+                            }
+                        },
+                        prefill: {
+                            name: user?.displayName || '',
+                            email: user?.email || '',
+                        },
+                        theme: { color: '#16a34a' },
+                    };
+                    const rzp = new (window as any).Razorpay(options);
+                    rzp.open();
+                };
+            }
         } catch (error: any) {
             console.error(error);
             toast.error(error.message || 'Payment initiation failed');
@@ -179,7 +213,10 @@ export default function TenantHomePage() {
                                 <Button
                                     className="flex-1"
                                     size="lg"
-                                    onClick={() => handlePayment(pendingBill)}
+                                    onClick={() => {
+                                        setCurrentBill(pendingBill);
+                                        setIsPaymentDialogOpen(true);
+                                    }}
                                     disabled={isProcessingPayment}
                                 >
                                     {isProcessingPayment ? (
@@ -297,6 +334,65 @@ export default function TenantHomePage() {
                     </Card>
                 </div>
             </div>
+            <Dialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Choose Payment Method</DialogTitle>
+                        <DialogDescription>
+                            Select your preferred payment gateway to pay ₹{pendingBill?.totalAmount}.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4">
+                        <RadioGroup
+                            defaultValue="cashfree"
+                            value={selectedGateway}
+                            onValueChange={setSelectedGateway}
+                            className="space-y-3"
+                        >
+                            <div className="flex items-center space-x-3 space-y-0 rounded-md border p-4 cursor-pointer hover:bg-slate-50 transition-colors">
+                                <RadioGroupItem value="cashfree" id="cashfree" />
+                                <Label htmlFor="cashfree" className="flex flex-1 items-center justify-between cursor-pointer">
+                                    <div className="space-y-0.5">
+                                        <p className="font-medium">Cashfree Payments</p>
+                                        <p className="text-xs text-muted-foreground italic">Lowest fee (1.75%)</p>
+                                    </div>
+                                    <Badge variant="outline" className="ml-auto bg-green-50 text-green-700 border-green-200">Recommended</Badge>
+                                </Label>
+                            </div>
+
+                            <div className="flex items-center space-x-3 space-y-0 rounded-md border p-4 cursor-pointer hover:bg-slate-50 transition-colors">
+                                <RadioGroupItem value="phonepe" id="phonepe" />
+                                <Label htmlFor="phonepe" className="flex flex-1 items-center justify-between cursor-pointer">
+                                    <div className="space-y-0.5">
+                                        <p className="font-medium">PhonePe</p>
+                                        <p className="text-xs text-muted-foreground italic">UPI First (1.99% fee)</p>
+                                    </div>
+                                </Label>
+                            </div>
+
+                            <div className="flex items-center space-x-3 space-y-0 rounded-md border p-4 cursor-pointer hover:bg-slate-50 transition-colors">
+                                <RadioGroupItem value="razorpay" id="razorpay" />
+                                <Label htmlFor="razorpay" className="flex flex-1 items-center justify-between cursor-pointer">
+                                    <div className="space-y-0.5">
+                                        <p className="font-medium">Razorpay</p>
+                                        <p className="text-xs text-muted-foreground italic">Reliable (2% fee)</p>
+                                    </div>
+                                </Label>
+                            </div>
+                        </RadioGroup>
+                    </div>
+                    <DialogFooter>
+                        <Button
+                            className="w-full"
+                            onClick={handlePayment}
+                            disabled={isProcessingPayment}
+                        >
+                            {isProcessingPayment && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Proceed to Pay
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

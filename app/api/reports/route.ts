@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminAuth, adminDb } from '@/lib/firebase-admin';
 import { startOfMonth, subMonths, format, endOfMonth } from 'date-fns';
+import * as XLSX from 'xlsx';
 
 async function getAuthUser(request: NextRequest) {
   const sessionCookie = request.cookies.get('session')?.value;
@@ -20,6 +21,10 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    const { searchParams } = new URL(request.url);
+    const formatType = searchParams.get('format');
+    const buildingId = searchParams.get('buildingId');
+
     const uid = user.uid;
     const now = new Date();
 
@@ -89,6 +94,37 @@ export async function GET(request: NextRequest) {
         occupancyRate: bTotalRooms > 0 ? Math.round((bOccupiedRooms / bTotalRooms) * 100) : 0
       };
     }));
+
+    if (formatType === 'excel') {
+      const wb = XLSX.utils.book_new();
+
+      // Building Summary Sheet
+      const summaryData = buildingsData.map(b => ({
+        'Building Name': b.name,
+        'Occupancy Rate': `${b.occupancyRate}%`,
+        'Total Rooms': b.totalRooms,
+        'Occupied Rooms': b.occupiedRooms,
+        'Pending Dues': b.pendingDues
+      }));
+      const wsSummary = XLSX.utils.json_to_sheet(summaryData);
+      XLSX.utils.book_append_sheet(wb, wsSummary, 'Portfolio Summary');
+
+      // 12-Month Collections Sheet
+      const collectionsData = monthlyCollections.map(c => ({
+        'Month': c.month,
+        'Amount Collected': c.amount
+      }));
+      const wsCollections = XLSX.utils.json_to_sheet(collectionsData);
+      XLSX.utils.book_append_sheet(wb, wsCollections, 'Monthly Collections');
+
+      const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+      return new Response(buffer, {
+        headers: {
+          'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          'Content-Disposition': 'attachment; filename="rentflow-financial-report.xlsx"'
+        }
+      });
+    }
 
     return NextResponse.json({
       success: true,

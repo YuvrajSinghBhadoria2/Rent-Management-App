@@ -51,6 +51,28 @@ export default function ReportsPage() {
     }
   }
 
+  async function handleExport() {
+    try {
+      const response = await fetch('/api/reports?format=excel');
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'rentflow-financial-report.xlsx';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        toast.success('Report downloaded successfully');
+      } else {
+        toast.error('Failed to generate report');
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error('An error occurred during export');
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -73,7 +95,7 @@ export default function ReportsPage() {
             <Filter className="h-4 w-4 mr-2" />
             Customize
           </Button>
-          <Button>
+          <Button onClick={handleExport}>
             <Download className="h-4 w-4 mr-2" />
             Export Monthly Report
           </Button>

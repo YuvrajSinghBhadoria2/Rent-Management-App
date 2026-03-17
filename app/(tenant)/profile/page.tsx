@@ -1,14 +1,15 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { 
-  User, 
-  Mail, 
-  Phone, 
-  Building, 
+import {
+  User,
+  Mail,
+  Phone,
+  Building,
   Home,
   Calendar,
-  Edit
+  Edit,
+  Download
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -17,6 +18,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
 interface TenantProfile {
+  uid: string;
   name: string;
   email: string;
   phone: string | null;
@@ -77,10 +79,16 @@ export default function TenantProfilePage() {
           <h1 className="text-3xl font-bold">My Profile</h1>
           <p className="text-muted-foreground">Your account and lease information</p>
         </div>
-        <Button variant="outline">
-          <Edit className="h-4 w-4 mr-2" />
-          Edit Profile
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => window.open(`/api/tenants/${profile?.uid}/ledger`, '_blank')} disabled={!profile}>
+            <Download className="h-4 w-4 mr-2" />
+            Download Ledger
+          </Button>
+          <Button variant="outline">
+            <Edit className="h-4 w-4 mr-2" />
+            Edit Profile
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
@@ -167,16 +175,16 @@ export default function TenantProfilePage() {
                 <div>
                   <p className="text-sm text-muted-foreground">Start Date</p>
                   <p className="font-medium">
-                    {profile.leaseStartDate 
-                      ? new Date(profile.leaseStartDate).toLocaleDateString() 
+                    {profile.leaseStartDate
+                      ? new Date(profile.leaseStartDate).toLocaleDateString()
                       : 'Not set'}
                   </p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">End Date</p>
                   <p className="font-medium">
-                    {profile.leaseEndDate 
-                      ? new Date(profile.leaseEndDate).toLocaleDateString() 
+                    {profile.leaseEndDate
+                      ? new Date(profile.leaseEndDate).toLocaleDateString()
                       : 'Not set'}
                   </p>
                 </div>

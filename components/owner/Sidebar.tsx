@@ -13,7 +13,10 @@ import {
     Settings,
     LogOut,
     Menu,
-    X
+    X,
+    Bell,
+    Zap,
+    TrendingUp
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/auth-context';
@@ -26,8 +29,11 @@ const navItems = [
     { label: 'Buildings', href: '/buildings', icon: Building2 },
     { label: 'Tenants', href: '/tenants', icon: Users },
     { label: 'Billing', href: '/billing', icon: Receipt },
+    { label: 'Broadcast', href: '/broadcast', icon: Zap },
+    { label: 'Increments', href: '/increments', icon: TrendingUp },
     { label: 'Complaints', href: '/complaints', icon: AlertCircle },
     { label: 'Reports', href: '/reports', icon: BarChart3 },
+    { label: 'Notifications', href: '/settings/notifications', icon: Bell },
     { label: 'Settings', href: '/settings', icon: Settings },
 ];
 
@@ -94,7 +100,7 @@ export default function Sidebar() {
             {/* Mobile Nav Trigger */}
             <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b flex items-center px-4 z-40">
                 <Sheet open={isOpen} onOpenChange={setIsOpen}>
-                    <SheetTrigger asChild>
+                    <SheetTrigger>
                         <Button variant="ghost" size="icon">
                             <Menu className="h-6 w-6" />
                         </Button>

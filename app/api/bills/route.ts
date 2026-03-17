@@ -5,11 +5,19 @@ import { z } from 'zod';
 
 const billSchema = z.object({
     tenantId: z.string().min(1),
-    month: z.string().min(1), // e.g., "March"
+    month: z.number().int().min(1).max(12),
     year: z.number().int().min(2020),
-    baseRent: z.number().min(0),
-    otherCharges: z.number().min(0).default(0),
-    dueDate: z.string().min(1), // ISO date
+    dueDate: z.string().min(1),
+    lineItems: z.array(z.object({
+        label: z.string().min(1),
+        amount: z.number(),
+        type: z.enum(['rent', 'electricity', 'water', 'maintenance', 'internet', 'parking', 'penalty', 'other', 'discount']),
+    })).min(1),
+    electricity: z.object({
+        prevUnits: z.number().optional(),
+        currUnits: z.number().optional(),
+        ratePerUnit: z.number().optional(),
+    }).optional(),
 });
 
 async function getAuthUser(request: NextRequest) {
@@ -97,7 +105,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Bill already exists for this period' }, { status: 400 });
         }
 
-        const totalAmount = validated.baseRent + validated.otherCharges;
+        const totalAmount = validated.lineItems.reduce((sum, item) => sum + item.amount, 0);
 
         const billData = {
             ...validated,
@@ -105,9 +113,9 @@ export async function POST(request: NextRequest) {
             buildingId: tenantData.currentBuildingId,
             roomId: tenantData.currentRoomId,
             bedId: tenantData.currentBedId || null,
-            lateFee: 0,
             totalAmount,
-            status: 'pending',
+            paidAmount: 0,
+            status: 'unpaid',
             createdAt: FieldValue.serverTimestamp(),
             updatedAt: FieldValue.serverTimestamp(),
         };
@@ -118,7 +126,7 @@ export async function POST(request: NextRequest) {
     } catch (error) {
         console.error('Error creating bill:', error);
         if (error instanceof z.ZodError) {
-            return NextResponse.json({ error: error.errors[0].message }, { status: 400 });
+            return NextResponse.json({ error: error.issues[0].message }, { status: 400 });
         }
         return NextResponse.json({ error: 'Failed to create bill' }, { status: 500 });
     }
