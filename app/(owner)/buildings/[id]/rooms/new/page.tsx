@@ -9,7 +9,6 @@ import {
     Loader2,
     ArrowLeft,
     LayoutGrid,
-    Plus,
     Trash2,
     Info,
     CheckCircle2
@@ -20,7 +19,6 @@ import { Button } from '@/components/ui/button';
 import {
     Form,
     FormControl,
-    FormDescription,
     FormField,
     FormItem,
     FormLabel,
@@ -34,9 +32,8 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 
 const roomSchema = z.object({

@@ -5,11 +5,11 @@ const ownerRoutes = ['/dashboard', '/buildings', '/tenants', '/billing', '/repor
 const tenantRoutes = ['/home', '/room', '/lease', '/bills', '/profile'];
 const authRoutes = ['/login', '/register', '/forgot-password'];
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
     const sessionCookie = request.cookies.get('session')?.value;
 
-    // Allow API routes and static files
+    // Allow API routes, static files, and root
     if (
         pathname.startsWith('/api') ||
         pathname.startsWith('/_next') ||
@@ -28,16 +28,24 @@ export function middleware(request: NextRequest) {
     const isOwnerRoute = ownerRoutes.some((route) => pathname.startsWith(route));
     const isTenantRoute = tenantRoutes.some((route) => pathname.startsWith(route));
 
-    // If on auth page and has session, redirect to dashboard
-    if (isAuthRoute && sessionCookie) {
-        return NextResponse.redirect(new URL('/dashboard', request.url));
-    }
-
-    // If on protected route without session, redirect to login
+    // If no session, redirect auth routes handled by client
+    // Protected routes need session - redirect to login
     if ((isOwnerRoute || isTenantRoute) && !sessionCookie) {
         const loginUrl = new URL('/login', request.url);
         loginUrl.searchParams.set('redirect', pathname);
         return NextResponse.redirect(loginUrl);
+    }
+
+    // If on auth page and has session, redirect based on role (handled by client)
+    if (isAuthRoute && sessionCookie) {
+        // Check role from a cookie set during login (simplified)
+        const userRole = request.cookies.get('user_role')?.value;
+        if (userRole === 'tenant') {
+            return NextResponse.redirect(new URL('/home', request.url));
+        }
+        if (userRole === 'owner') {
+            return NextResponse.redirect(new URL('/dashboard', request.url));
+        }
     }
 
     return NextResponse.next();

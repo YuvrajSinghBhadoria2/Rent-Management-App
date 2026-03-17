@@ -8,8 +8,6 @@ import {
     MapPin,
     Layers,
     LayoutGrid,
-    Calendar,
-    CreditCard,
     ArrowLeft,
     Edit,
     Trash2,
@@ -19,9 +17,8 @@ import {
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import {
     AlertDialog,
     AlertDialogAction,
