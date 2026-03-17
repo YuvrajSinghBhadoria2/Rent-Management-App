@@ -74,8 +74,10 @@ export default function ReceiptPage() {
                     <Button variant="outline" onClick={handlePrint}>
                         <Printer className="mr-2 h-4 w-4" /> Print
                     </Button>
-                    <Button>
-                        <Download className="mr-2 h-4 w-4" /> PDF
+                    <Button asChild>
+                        <a href={`/api/bills/${id}/pdf`} download>
+                            <Download className="mr-2 h-4 w-4" /> PDF
+                        </a>
                     </Button>
                 </div>
             </div>

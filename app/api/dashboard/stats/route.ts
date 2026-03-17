@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminDb } from '@/lib/firebase-admin';
+import { adminAuth, adminDb } from '@/lib/firebase-admin';
+import { startOfMonth, endOfMonth } from 'date-fns';
 
 async function getAuthUser(request: NextRequest) {
     const sessionCookie = request.cookies.get('session')?.value;
     if (!sessionCookie) return null;
 
     try {
-        const { adminAuth } = await import('@/lib/firebase-admin');
         const decodedToken = await adminAuth.verifySessionCookie(sessionCookie, true);
         return decodedToken;
     } catch (error) {
@@ -21,59 +21,53 @@ export async function GET(request: NextRequest) {
     }
 
     try {
-        const ownerId = user.uid;
+        const uid = user.uid;
         const now = new Date();
-        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        const monthStart = startOfMonth(now);
+        const monthEnd = endOfMonth(now);
 
-        // Get total buildings
-        const buildingsSnap = await adminDb
-            .collection('buildings')
-            .where('ownerId', '==', ownerId)
+        // 1. Total Buildings
+        const buildingsSnap = await adminDb.collection('buildings')
+            .where('ownerId', '==', uid)
             .where('isActive', '==', true)
             .get();
-        const totalBuildings = buildingsSnap.docs.length;
+        const totalBuildings = buildingsSnap.size;
 
-        // Get total tenants (from users collection where role is tenant and owned by this owner)
-        const tenantsSnap = await adminDb
-            .collection('tenants')
-            .where('ownerId', '==', ownerId)
+        // 2. Total Tenants
+        const tenantsSnap = await adminDb.collection('tenants')
+            .where('ownerId', '==', uid)
             .get();
-        const totalTenants = tenantsSnap.docs.length;
+        const totalTenants = tenantsSnap.size;
 
-        // Get pending dues (unpaid + partial bills)
-        const billsSnap = await adminDb
-            .collection('bills')
-            .where('ownerId', '==', ownerId)
-            .where('status', 'in', ['unpaid', 'partial'])
+        // 3. Pending Dues (pending + overdue)
+        const billsSnap = await adminDb.collection('bills')
+            .where('ownerId', '==', uid)
+            .where('status', 'in', ['pending', 'overdue'])
             .get();
-        
+
         let pendingDues = 0;
-        billsSnap.docs.forEach(doc => {
+        billsSnap.forEach((doc: any) => {
             const bill = doc.data();
-            pendingDues += (bill.totalAmount - bill.paidAmount);
+            pendingDues += (bill.totalAmount || 0) - (bill.paidAmount || 0);
         });
 
-        // Get open complaints
-        const complaintsSnap = await adminDb
-            .collection('complaints')
-            .where('ownerId', '==', ownerId)
+        // 4. Open Complaints
+        const complaintsSnap = await adminDb.collection('complaints')
+            .where('ownerId', '==', uid)
             .where('status', 'in', ['open', 'in_progress'])
             .get();
-        const openComplaints = complaintsSnap.docs.length;
+        const openComplaints = complaintsSnap.size;
 
-        // Get rent collected this month
-        const paymentsSnap = await adminDb
-            .collection('payments')
-            .where('ownerId', '==', ownerId)
-            .where('paidAt', '>=', startOfMonth)
-            .where('paidAt', '<=', endOfMonth)
+        // 5. Rent Collected This Month
+        const paymentsSnap = await adminDb.collection('payments')
+            .where('ownerId', '==', uid)
+            .where('createdAt', '>=', monthStart)
+            .where('createdAt', '<=', monthEnd)
             .get();
-        
+
         let rentCollected = 0;
-        paymentsSnap.docs.forEach(doc => {
-            const payment = doc.data();
-            rentCollected += payment.amount;
+        paymentsSnap.forEach((doc: any) => {
+            rentCollected += doc.data().amount || 0;
         });
 
         return NextResponse.json({
@@ -87,7 +81,7 @@ export async function GET(request: NextRequest) {
             }
         });
     } catch (error) {
-        console.error('Error fetching dashboard stats:', error);
-        return NextResponse.json({ error: 'Failed to fetch stats' }, { status: 500 });
+        console.error('Dashboard stats error:', error);
+        return NextResponse.json({ error: 'Failed to fetch dashboard stats' }, { status: 500 });
     }
 }

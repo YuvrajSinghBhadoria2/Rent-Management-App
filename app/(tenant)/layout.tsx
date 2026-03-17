@@ -14,7 +14,7 @@ const navItems = [
     { href: '/room', label: 'My Room', icon: Home },
     { href: '/lease', label: 'My Lease', icon: FileText },
     { href: '/bills', label: 'Bills', icon: Receipt },
-    { href: '/complaints', label: 'Complaints', icon: MessageSquare },
+    { href: '/my-complaints', label: 'Complaints', icon: MessageSquare },
     { href: '/profile', label: 'Profile', icon: User },
 ];
 

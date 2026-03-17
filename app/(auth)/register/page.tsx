@@ -21,6 +21,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 
+type RegisterFormValues = z.infer<typeof registerSchema>;
+
 const registerSchema = z.object({
     name: z.string().min(2, 'Name must be at least 2 characters'),
     email: z.string().email('Invalid email address'),
@@ -85,7 +87,7 @@ export default function RegisterPage() {
                             <FormField
                                 control={form.control}
                                 name="name"
-                                render={({ field }) => (
+                                render={({ field }: { field: import('react-hook-form').ControllerRenderProps<RegisterFormValues, 'name'> }) => (
                                     <FormItem>
                                         <FormLabel>Full Name</FormLabel>
                                         <FormControl>
@@ -98,7 +100,7 @@ export default function RegisterPage() {
                             <FormField
                                 control={form.control}
                                 name="email"
-                                render={({ field }) => (
+                                render={({ field }: { field: import('react-hook-form').ControllerRenderProps<RegisterFormValues, 'email'> }) => (
                                     <FormItem>
                                         <FormLabel>Email</FormLabel>
                                         <FormControl>
@@ -111,7 +113,7 @@ export default function RegisterPage() {
                             <FormField
                                 control={form.control}
                                 name="phone"
-                                render={({ field }) => (
+                                render={({ field }: { field: import('react-hook-form').ControllerRenderProps<RegisterFormValues, 'phone'> }) => (
                                     <FormItem>
                                         <FormLabel>Phone Number (Optional)</FormLabel>
                                         <FormControl>
@@ -124,7 +126,7 @@ export default function RegisterPage() {
                             <FormField
                                 control={form.control}
                                 name="password"
-                                render={({ field }) => (
+                                render={({ field }: { field: import('react-hook-form').ControllerRenderProps<RegisterFormValues, 'password'> }) => (
                                     <FormItem>
                                         <FormLabel>Password</FormLabel>
                                         <FormControl>
