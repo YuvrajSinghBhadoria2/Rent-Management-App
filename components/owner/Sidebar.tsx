@@ -22,7 +22,6 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
 const navItems = [
     { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -37,85 +36,77 @@ const navItems = [
     { label: 'Settings', href: '/settings', icon: Settings },
 ];
 
-export default function Sidebar() {
+export function SidebarContent({ onNavItemClick }: { onNavItemClick?: () => void }) {
     const pathname = usePathname();
     const { userDoc, signOut } = useAuth();
-    const [isOpen, setIsOpen] = useState(false);
 
-    const NavContent = () => (
-        <div className="flex flex-col h-full bg-white border-r">
+    return (
+        <div className="flex flex-col h-full bg-white dark:bg-black/60 dark:backdrop-blur-xl border-r border-gray-100 dark:border-white/10">
             <div className="p-6">
-                <h1 className="text-2xl font-bold text-primary">RentFlow</h1>
+                <Link href="/dashboard" className="flex items-center gap-1 group">
+                    <span className="text-2xl font-bold text-gray-900 dark:text-white group-hover:text-primary transition-colors">Rent</span>
+                    <span className="text-2xl font-bold text-primary">Flow</span>
+                </Link>
             </div>
 
-            <nav className="flex-1 px-4 space-y-1">
+            <nav className="flex-1 px-4 space-y-1.5">
                 {navItems.map((item) => {
-                    const isActive = pathname.startsWith(item.href);
+                    const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
                     return (
                         <Link
                             key={item.href}
                             href={item.href}
                             className={cn(
-                                "flex items-center gap-3 px-3 py-2 rounded-md transition-colors",
+                                "flex items-center gap-3 px-3 py-2 rounded-xl transition-all duration-200 group relative",
                                 isActive
-                                    ? "bg-primary text-primary-foreground"
-                                    : "text-muted-foreground hover:bg-gray-100"
+                                    ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-foreground shadow-[inset_0_0_0_1px_rgba(59,130,246,0.1)]"
+                                    : "text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white"
                             )}
-                            onClick={() => setIsOpen(false)}
+                            onClick={() => onNavItemClick?.()}
                         >
-                            <item.icon className="h-5 w-5" />
-                            <span className="font-medium">{item.label}</span>
+                            <item.icon className={cn(
+                                "h-4 w-4 transition-transform group-hover:scale-110",
+                                isActive ? "text-primary" : "text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300"
+                            )} />
+                            <span className="text-sm font-medium">{item.label}</span>
+                            {isActive && (
+                                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-primary rounded-r-full" />
+                            )}
                         </Link>
                     );
                 })}
             </nav>
 
-            <div className="p-4 border-t">
-                <div className="flex items-center gap-3 mb-4 px-2">
-                    <Avatar className="h-9 w-9">
+            <div className="p-4 mt-auto border-t border-gray-100 dark:border-white/10">
+                <div className="flex items-center gap-3 mb-4 px-2 py-2 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 transition-colors cursor-pointer group">
+                    <Avatar className="h-9 w-9 border border-primary/20 ring-2 ring-transparent group-hover:ring-primary/20 transition-all">
                         <AvatarImage src={userDoc?.profilePhotoUrl || ''} />
-                        <AvatarFallback className="bg-primary/10 text-primary">
+                        <AvatarFallback className="bg-primary/10 text-primary font-bold">
                             {userDoc?.name?.[0].toUpperCase()}
                         </AvatarFallback>
                     </Avatar>
                     <div className="flex flex-col truncate">
-                        <span className="text-sm font-semibold truncate">{userDoc?.name}</span>
-                        <span className="text-xs text-muted-foreground truncate font-medium">Owner</span>
+                        <span className="text-sm font-semibold truncate dark:text-white">{userDoc?.name}</span>
+                        <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Owner</span>
                     </div>
                 </div>
                 <Button
                     variant="ghost"
-                    className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
+                    className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl px-3"
                     onClick={() => signOut()}
                 >
-                    <LogOut className="mr-3 h-5 w-5" />
-                    Logout
+                    <LogOut className="mr-3 h-4 w-4" />
+                    <span className="text-sm font-medium">Logout</span>
                 </Button>
             </div>
         </div>
     );
+}
 
+export default function Sidebar() {
     return (
-        <>
-            {/* Mobile Nav Trigger */}
-            <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b flex items-center px-4 z-40">
-                <Sheet open={isOpen} onOpenChange={setIsOpen}>
-                    <SheetTrigger>
-                        <Button variant="ghost" size="icon">
-                            <Menu className="h-6 w-6" />
-                        </Button>
-                    </SheetTrigger>
-                    <SheetContent side="left" className="p-0 w-72">
-                        <NavContent />
-                    </SheetContent>
-                </Sheet>
-                <span className="ml-4 text-xl font-bold text-primary">RentFlow</span>
-            </div>
-
-            {/* Desktop Sidebar */}
-            <aside className="hidden md:block w-64 h-screen shrink-0">
-                <NavContent />
-            </aside>
-        </>
+        <aside className="hidden md:block w-[220px] h-screen shrink-0 sticky top-0 bg-white dark:bg-black/60 dark:backdrop-blur-xl border-r border-gray-100 dark:border-white/10">
+            <SidebarContent />
+        </aside>
     );
 }

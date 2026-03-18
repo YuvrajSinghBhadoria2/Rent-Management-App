@@ -11,7 +11,11 @@ import {
   Filter,
   ArrowUpRight,
   ArrowDownRight,
-  ChevronRight
+  ChevronRight,
+  BarChart3,
+  PieChart,
+  Calendar,
+  ArrowRight
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -26,7 +30,8 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, cn } from '@/lib/utils';
+import { StatCard } from '@/components/owner/StatCard';
 
 export default function ReportsPage() {
   const [data, setData] = useState<any>(null);
@@ -75,122 +80,106 @@ export default function ReportsPage() {
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="flex h-[80vh] items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-10 w-10 animate-spin text-primary opacity-50" />
+          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground animate-pulse">Compiling Analytics</p>
+        </div>
       </div>
     );
   }
 
-  if (!data) return null;
+  if (!data) return (
+    <div className="flex flex-col items-center justify-center py-24 text-center">
+      <BarChart3 className="h-12 w-12 text-muted-foreground opacity-20 mb-4" />
+      <p className="text-muted-foreground">No data available for reporting.</p>
+    </div>
+  );
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto py-8 px-4">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="space-y-8 max-w-7xl mx-auto px-4 md:px-8 py-6 animate-fade-in">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Business Analytics</h1>
-          <p className="text-muted-foreground">Comprehensive overview of your rental collection and portfolio health.</p>
+          <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-br from-gray-900 to-gray-600 dark:from-white dark:to-white/60 bg-clip-text text-transparent">
+            Business Analytics
+          </h1>
+          <p className="text-muted-foreground mt-2 font-medium">Comprehensive overview of your rental collection and portfolio health.</p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="outline">
+          <Button variant="outline" className="glass-card border-white/10 hover:bg-white/5 h-11 px-6">
             <Filter className="h-4 w-4 mr-2" />
-            Customize
+            Customize View
           </Button>
-          <Button onClick={handleExport}>
+          <Button onClick={handleExport} className="shadow-lg shadow-primary/20 h-11 px-6">
             <Download className="h-4 w-4 mr-2" />
-            Export Monthly Report
+            Export MS Excel
           </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="shadow-sm border-primary/5">
-          <CardHeader className="pb-2">
-            <CardDescription className="flex items-center text-xs uppercase font-bold text-muted-foreground tracking-wider">
-              <IndianRupee className="h-3 w-3 mr-1" /> Total Pending Dues
-            </CardDescription>
-            <CardTitle className="text-2xl font-bold text-destructive">
-              {formatCurrency(data.summary.pendingDuesTotal)}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-[10px] text-muted-foreground">Calculated across all active leases</p>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-sm border-primary/5">
-          <CardHeader className="pb-2">
-            <CardDescription className="flex items-center text-xs uppercase font-bold text-muted-foreground tracking-wider">
-              <TrendingUp className="h-3 w-3 mr-1" /> Current Occupancy
-            </CardDescription>
-            <CardTitle className="text-2xl font-bold text-primary">
-              {data.summary.occupancyRate}%
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Progress value={data.summary.occupancyRate} className="h-1.5" />
-            <p className="text-[10px] text-muted-foreground mt-2">{data.summary.occupiedRooms} / {data.summary.totalUnits || data.summary.totalRooms} Units Occupied</p>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-sm border-primary/5">
-          <CardHeader className="pb-2">
-            <CardDescription className="flex items-center text-xs uppercase font-bold text-muted-foreground tracking-wider">
-              <Building2 className="h-3 w-3 mr-1" /> Portfolio Size
-            </CardDescription>
-            <CardTitle className="text-2xl font-bold">
-              {data.summary.totalBuildings}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-[10px] text-muted-foreground">Active Buildings Managed</p>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-sm border-primary/5">
-          <CardHeader className="pb-2">
-            <CardDescription className="flex items-center text-xs uppercase font-bold text-muted-foreground tracking-wider">
-              <IndianRupee className="h-3 w-3 mr-1" /> Avg. Collection
-            </CardDescription>
-            <CardTitle className="text-2xl font-bold">
-              {formatCurrency(data.monthlyCollections[data.monthlyCollections.length - 1].amount)}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center text-[10px] text-green-600 font-medium">
-              <ArrowUpRight className="h-3 w-3 mr-0.5" /> 8% from last month
-            </div>
-          </CardContent>
-        </Card>
+      {/* Top Row: Key Metrics */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatCard
+          title="Total Pending Dues"
+          value={formatCurrency(data.summary.pendingDuesTotal)}
+          icon={IndianRupee}
+          trend={{ value: 12, isPositive: false }}
+          className="border-destructive/20 bg-destructive/5"
+        />
+        <StatCard
+          title="Occupancy Rate"
+          value={`${data.summary.occupancyRate}%`}
+          icon={Users}
+          trend={{ value: 5, isPositive: true }}
+        />
+        <StatCard
+          title="Portfolio Size"
+          value={data.summary.totalBuildings}
+          icon={Building2}
+        />
+        <StatCard
+          title="Avg. Collection"
+          value={formatCurrency(data.monthlyCollections[data.monthlyCollections.length - 1].amount)}
+          icon={TrendingUp}
+          trend={{ value: 8, isPositive: true }}
+        />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2 shadow-md">
-          <CardHeader>
-            <CardTitle>Historical Collection Distribution</CardTitle>
-            <CardDescription>Rent collected over the last 12 months</CardDescription>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Collection Distribution Chart */}
+        <Card className="lg:col-span-2 glass-card border-white/10 shadow-2xl">
+          <CardHeader className="flex flex-row items-center justify-between pb-8">
+            <div>
+              <CardTitle className="text-xl font-bold">Collection Distribution</CardTitle>
+              <CardDescription className="text-xs">Rent collected over the last 12 months</CardDescription>
+            </div>
+            <div className="flex items-center gap-1 bg-white/5 p-1 rounded-lg border border-white/10">
+              <Button variant="ghost" size="sm" className="h-7 text-[10px] font-bold px-3 bg-white/10">12M</Button>
+              <Button variant="ghost" size="sm" className="h-7 text-[10px] font-bold px-3">6M</Button>
+            </div>
           </CardHeader>
-          <CardContent className="h-[300px] flex items-end gap-2 px-6 pt-10">
+          <CardContent className="h-[350px] flex items-end gap-3 px-6 pb-12">
             {data.monthlyCollections.map((month: any, idx: number) => {
-              const maxHeight = 200;
+              const maxHeight = 280;
               const maxAmount = Math.max(...data.monthlyCollections.map((m: any) => m.amount)) || 1;
               const height = (month.amount / maxAmount) * maxHeight;
 
               return (
-                <div key={idx} className="flex-1 flex flex-col items-center gap-2 group">
-                  <div className="w-full relative">
+                <div key={idx} className="flex-1 flex flex-col items-center gap-3 group relative">
+                  <div className="w-full relative h-[280px] flex flex-col justify-end">
                     <div
-                      className="w-full bg-primary/20 rounded-t-sm group-hover:bg-primary/40 transition-all duration-300 relative"
+                      className="w-full bg-primary/20 rounded-t-xl group-hover:bg-primary/40 transition-all duration-500 relative shadow-[0_0_20px_rgba(59,130,246,0.1)] group-hover:shadow-[0_0_25px_rgba(59,130,246,0.2)]"
                       style={{ height: `${height}px` }}
                     >
-                      {month.amount > 0 && (
-                        <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-opacity">
-                          {formatCurrency(month.amount)}
-                        </div>
-                      )}
+                      <div className="absolute -top-10 left-1/2 -translate-x-1/2 glass-card px-2 py-1 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none whitespace-nowrap z-10">
+                        <p className="text-[10px] font-bold">{formatCurrency(month.amount)}</p>
+                      </div>
+                      {/* Glow effect at top of bar */}
+                      <div className="absolute top-0 left-0 right-0 h-1 bg-primary/40 blur-sm rounded-t-xl" />
                     </div>
                   </div>
-                  <span className="text-[10px] font-medium text-muted-foreground rotate-45 mt-2 origin-left whitespace-nowrap">
-                    {month.month}
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider group-hover:text-primary transition-colors">
+                    {month.month.substring(0, 3)}
                   </span>
                 </div>
               );
@@ -198,64 +187,90 @@ export default function ReportsPage() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-sm border-primary/5 bg-primary/5">
-          <CardHeader>
-            <CardTitle className="text-lg">Triage Required</CardTitle>
-            <CardDescription>Buildings with highest pending dues</CardDescription>
+        {/* Triage Side Card */}
+        <Card className="glass-card border-white/10 bg-primary/5 shadow-xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-8 opacity-5">
+            <ArrowUpRight className="h-24 w-24 text-primary" />
+          </div>
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg font-bold">Critical Dues</CardTitle>
+            <CardDescription className="text-xs">Buildings requiring immediate triage</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-3">
             {data.buildings
               .sort((a: any, b: any) => b.pendingDues - a.pendingDues)
               .slice(0, 5)
               .map((b: any) => (
-                <div key={b.id} className="flex items-center justify-between p-3 bg-white rounded-lg shadow-sm border border-primary/10">
+                <div key={b.id} className="flex items-center justify-between p-4 glass-card border-white/10 hover:bg-white/5 transition-all group">
                   <div>
-                    <p className="text-sm font-bold">{b.name}</p>
-                    <p className="text-[10px] text-muted-foreground">{b.occupiedRooms} / {b.totalRooms} Rooms Occupied</p>
+                    <p className="text-sm font-bold group-hover:text-primary transition-colors">{b.name}</p>
+                    <div className="flex items-center gap-1.5 mt-1 text-[10px] font-bold text-muted-foreground uppercase tracking-tight">
+                      <Users className="h-3 w-3" />
+                      {b.occupiedRooms}/{b.totalRooms} Units
+                    </div>
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-bold text-destructive">{formatCurrency(b.pendingDues)}</p>
-                    <p className="text-[10px] text-muted-foreground italic">Pending</p>
+                    <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest mt-0.5 opacity-50">Pending</p>
                   </div>
                 </div>
               ))}
+            <Button variant="ghost" className="w-full mt-4 text-[10px] font-bold uppercase tracking-widest hover:bg-primary/10 hover:text-primary transition-all group" asChild>
+              <Link href="/billing">
+                View Recovery Manager <ArrowRight className="ml-2 h-3 w-3 group-hover:translate-x-1 transition-transform" />
+              </Link>
+            </Button>
           </CardContent>
         </Card>
       </div>
 
-      <Card className="shadow-sm">
-        <CardHeader>
-          <CardTitle>Building Performance Matrix</CardTitle>
-          <CardDescription>Detailed breakdown of your property portfolio</CardDescription>
+      {/* Performance Matrix Table */}
+      <Card className="glass-card border-white/10 shadow-2xl overflow-hidden">
+        <CardHeader className="pb-6 border-b border-white/5">
+          <CardTitle className="text-xl font-bold">Portfolio Performance Matrix</CardTitle>
+          <CardDescription className="text-xs">Granular analysis of building-level efficiency</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Building Name</TableHead>
-                <TableHead>Total Units</TableHead>
-                <TableHead>Occupancy</TableHead>
-                <TableHead className="text-right">Pending Dues</TableHead>
-                <TableHead></TableHead>
+            <TableHeader className="bg-white/5">
+              <TableRow className="hover:bg-transparent border-white/5">
+                <TableHead className="text-[10px] font-bold uppercase tracking-widest py-4">Property Name</TableHead>
+                <TableHead className="text-[10px] font-bold uppercase tracking-widest py-4">Total Inventory</TableHead>
+                <TableHead className="text-[10px] font-bold uppercase tracking-widest py-4">Occupancy Ratio</TableHead>
+                <TableHead className="text-right text-[10px] font-bold uppercase tracking-widest py-4">Pending Leakage</TableHead>
+                <TableHead className="w-12"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {data.buildings.map((building: any) => (
-                <TableRow key={building.id} className="hover:bg-muted/30 transition-colors">
-                  <TableCell className="font-semibold">{building.name}</TableCell>
-                  <TableCell>{building.totalRooms}</TableCell>
+                <TableRow key={building.id} className="hover:bg-white/5 transition-colors group border-white/5">
+                  <TableCell className="font-bold py-5">{building.name}</TableCell>
+                  <TableCell className="font-medium text-muted-foreground">{building.totalRooms} Units</TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Progress value={building.occupancyRate} className="h-1 w-20" />
-                      <span className="text-xs font-medium">{building.occupancyRate}%</span>
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1 max-w-[120px] h-1.5 bg-white/5 rounded-full overflow-hidden">
+                        <div
+                          className={cn(
+                            "h-full transition-all duration-1000 bg-primary",
+                            building.occupancyRate < 50 ? "bg-amber-500" : ""
+                          )}
+                          style={{ width: `${building.occupancyRate}%` }}
+                        />
+                      </div>
+                      <span className="text-xs font-bold">{building.occupancyRate}%</span>
                     </div>
                   </TableCell>
-                  <TableCell className={`text-right font-bold ${building.pendingDues > 0 ? 'text-destructive' : 'text-green-600'}`}>
+                  <TableCell className={cn(
+                    "text-right font-bold",
+                    building.pendingDues > 0 ? 'text-destructive' : 'text-green-500'
+                  )}>
                     {formatCurrency(building.pendingDues)}
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="icon">
-                      <ChevronRight className="h-4 w-4" />
+                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-white/10 group-hover:text-primary transition-all" asChild>
+                      <Link href={`/buildings/${building.id}`}>
+                        <ChevronRight className="h-4 w-4" />
+                      </Link>
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -266,10 +281,4 @@ export default function ReportsPage() {
       </Card>
     </div>
   );
-}
-
-function formatCurrencySmall(amount: number) {
-  if (amount >= 1000000) return `${(amount / 1000000).toFixed(1)}M`;
-  if (amount >= 1000) return `${(amount / 1000).toFixed(0)}K`;
-  return amount.toString();
 }

@@ -122,7 +122,7 @@ export default function TenantComplaintsPage() {
                             </div>
                             <p className="text-muted-foreground">No complaints filed yet.</p>
                             <Button variant="link" asChild className="mt-2">
-                                <Link href="/complaints/new">File your first request</Link>
+                                <Link href="/tenant-complaints/new">File your first request</Link>
                             </Button>
                         </div>
                     ) : (
@@ -131,7 +131,7 @@ export default function TenantComplaintsPage() {
                                 <div
                                     key={complaint.id}
                                     className="p-4 hover:bg-muted/30 transition-colors cursor-pointer group"
-                                    onClick={() => router.push(`/complaints/${complaint.id}`)}
+                                    onClick={() => router.push(`/tenant-complaints/${complaint.id}`)}
                                 >
                                     <div className="flex items-start justify-between">
                                         <div className="space-y-1">

@@ -85,7 +85,7 @@ export default function NewComplaintPage() {
             const result = await response.json();
             if (result.success) {
                 toast.success('Complaint submitted successfully');
-                router.push('/complaints');
+                router.push('/tenant-complaints');
             } else {
                 toast.error(result.error || 'Failed to submit complaint');
             }

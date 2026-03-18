@@ -14,6 +14,7 @@ import {
     AlertTriangle
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { cn } from "@/lib/utils";
 
 import { Button } from '@/components/ui/button';
 import {
@@ -77,7 +78,7 @@ export default function RoomDetailPage() {
     const [room, setRoom] = useState<any>(null);
 
     const form = useForm<z.infer<typeof roomSchema>>({
-        resolver: zodResolver(roomSchema),
+        resolver: zodResolver(roomSchema) as any,
         defaultValues: {
             number: '',
             name: '',
@@ -178,39 +179,54 @@ export default function RoomDetailPage() {
     }
 
     return (
-        <div className="space-y-6 max-w-4xl mx-auto pb-20">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="space-y-10 max-w-5xl mx-auto pb-20 animate-fade-in">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div className="flex items-center gap-4">
-                    <Button variant="ghost" size="icon" onClick={() => router.back()}>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => router.back()}
+                        className="rounded-full hover:bg-white/10 glass-card"
+                    >
                         <ArrowLeft className="h-4 w-4" />
                     </Button>
                     <div>
-                        <h1 className="text-3xl font-bold tracking-tight">Room {room?.number}</h1>
-                        <p className="text-muted-foreground flex items-center gap-2">
-                            Status: <Badge variant="outline" className="capitalize">{room?.status.replace('_', ' ')}</Badge>
+                        <div className="flex items-center gap-3">
+                            <h1 className="text-4xl font-black tracking-tighter text-gray-900 dark:text-white">Room {room?.number}</h1>
+                            <Badge className={cn(
+                                "rounded-full px-4 py-1 text-[10px] font-black uppercase tracking-widest",
+                                room?.status === 'vacant' ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" :
+                                    room?.status === 'occupied' ? "bg-blue-500/10 text-blue-600 border-blue-500/20" :
+                                        "bg-amber-500/10 text-amber-600 border-amber-500/20"
+                            )}>
+                                {room?.status.replace('_', ' ')}
+                            </Badge>
+                        </div>
+                        <p className="text-gray-500 dark:text-gray-400 mt-1 font-medium text-sm">
+                            Floor {room?.floor} • {room?.type.replace('_', ' ')}
                         </p>
                     </div>
                 </div>
 
                 <AlertDialog>
                     <AlertDialogTrigger asChild>
-                        <Button variant="destructive">
+                        <Button variant="ghost" className="rounded-full px-6 font-bold text-xs uppercase tracking-widest text-red-500 hover:text-red-600 hover:bg-red-500/10">
                             <Trash2 className="mr-2 h-4 w-4" />
                             Delete Room
                         </Button>
                     </AlertDialogTrigger>
-                    <AlertDialogContent>
+                    <AlertDialogContent className="rounded-[2rem] glass-card border-none p-8">
                         <AlertDialogHeader>
-                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                            <AlertDialogDescription>
+                            <AlertDialogTitle className="text-2xl font-black tracking-tight">Are you absolutely sure?</AlertDialogTitle>
+                            <AlertDialogDescription className="text-gray-500 font-medium">
                                 This will permanently delete Room {room?.number}. This action cannot be undone.
-                                Keep in mind that you shouldn&apos;t delete rooms that have active leases.
+                                Deleting rooms with active history might impact your reports.
                             </AlertDialogDescription>
                         </AlertDialogHeader>
-                        <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={onDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                                {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Delete'}
+                        <AlertDialogFooter className="mt-6 gap-3">
+                            <AlertDialogCancel className="rounded-full font-bold px-6">Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={onDelete} className="rounded-full font-bold px-8 bg-red-500 hover:bg-red-600">
+                                {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Confirm Delete'}
                             </AlertDialogAction>
                         </AlertDialogFooter>
                     </AlertDialogContent>
@@ -218,143 +234,161 @@ export default function RoomDetailPage() {
             </div>
 
             <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        <div className="md:col-span-2 space-y-8">
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="flex items-center gap-2">
-                                        <LayoutGrid className="h-5 w-5 text-primary" />
-                                        Modify Room
+                <form onSubmit={form.handleSubmit((values: any) => onSubmit(values))} className="space-y-10">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+                        <div className="lg:col-span-2 space-y-10">
+                            <Card className="glass-card border-none rounded-[2.5rem] overflow-hidden shadow-none">
+                                <CardHeader className="p-10 pb-0">
+                                    <CardTitle className="text-xl font-black flex items-center gap-3">
+                                        <div className="p-2 rounded-xl bg-primary/10 text-primary">
+                                            <LayoutGrid className="h-5 w-5" />
+                                        </div>
+                                        Core Configuration
                                     </CardTitle>
                                 </CardHeader>
-                                <CardContent className="space-y-4">
-                                    <div className="grid grid-cols-2 gap-4">
+                                <CardContent className="p-10 space-y-8">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
                                         <FormField
-                                            control={form.control}
+                                            control={form.control as any}
                                             name="number"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel>Room Number*</FormLabel>
+                                                    <FormLabel className="text-[10px] font-black uppercase tracking-widest opacity-60">Room Identifier</FormLabel>
                                                     <FormControl>
-                                                        <Input {...field} />
+                                                        <Input {...field} className="rounded-2xl bg-gray-50/50 dark:bg-white/5 border-gray-100 dark:border-white/10 h-12 px-4 focus:ring-primary/20" />
                                                     </FormControl>
-                                                    <FormMessage />
+                                                    <FormMessage className="text-[10px]" />
                                                 </FormItem>
                                             )}
                                         />
                                         <FormField
-                                            control={form.control}
+                                            control={form.control as any}
                                             name="floor"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel>Floor</FormLabel>
+                                                    <FormLabel className="text-[10px] font-black uppercase tracking-widest opacity-60">Floor Level</FormLabel>
                                                     <FormControl>
-                                                        <Input type="number" {...field} />
+                                                        <Input type="number" {...field} className="rounded-2xl bg-gray-50/50 dark:bg-white/5 border-gray-100 dark:border-white/10 h-12 px-4 focus:ring-primary/20" />
                                                     </FormControl>
-                                                    <FormMessage />
+                                                    <FormMessage className="text-[10px]" />
                                                 </FormItem>
                                             )}
                                         />
                                     </div>
 
                                     <FormField
-                                        control={form.control}
+                                        control={form.control as any}
                                         name="name"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Room Name</FormLabel>
+                                                <FormLabel className="text-[10px] font-black uppercase tracking-widest opacity-60">Custom Name / Alias (Optional)</FormLabel>
                                                 <FormControl>
-                                                    <Input {...field} value={field.value || ''} />
+                                                    <Input {...field} value={field.value || ''} placeholder="e.g. Master Bedroom, Unit A" className="rounded-2xl bg-gray-50/50 dark:bg-white/5 border-gray-100 dark:border-white/10 h-12 px-4 focus:ring-primary/20" />
                                                 </FormControl>
-                                                <FormMessage />
+                                                <FormMessage className="text-[10px]" />
                                             </FormItem>
                                         )}
                                     />
 
-                                    <div className="grid grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
                                         <FormField
-                                            control={form.control}
+                                            control={form.control as any}
                                             name="type"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel>Room Type</FormLabel>
+                                                    <FormLabel className="text-[10px] font-black uppercase tracking-widest opacity-60">Room Category</FormLabel>
                                                     <Select onValueChange={field.onChange} value={field.value}>
                                                         <FormControl>
-                                                            <SelectTrigger>
+                                                            <SelectTrigger className="rounded-2xl bg-gray-50/50 dark:bg-white/5 border-gray-100 dark:border-white/10 h-12 px-4">
                                                                 <SelectValue placeholder="Select type" />
                                                             </SelectTrigger>
                                                         </FormControl>
-                                                        <SelectContent>
-                                                            <SelectItem value="single">Single</SelectItem>
-                                                            <SelectItem value="double">Double</SelectItem>
-                                                            <SelectItem value="dormitory">Dormitory</SelectItem>
-                                                            <SelectItem value="studio">Studio</SelectItem>
+                                                        <SelectContent className="rounded-2xl border-none shadow-2xl">
+                                                            <SelectItem value="single">Single Room</SelectItem>
+                                                            <SelectItem value="double">Double Sharing</SelectItem>
+                                                            <SelectItem value="dormitory">Dormitory Style</SelectItem>
+                                                            <SelectItem value="studio">Studio Apartment</SelectItem>
                                                         </SelectContent>
                                                     </Select>
-                                                    <FormMessage />
+                                                    <FormMessage className="text-[10px]" />
                                                 </FormItem>
                                             )}
                                         />
                                         <FormField
-                                            control={form.control}
+                                            control={form.control as any}
                                             name="monthlyRent"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel>Monthly Rent (₹)*</FormLabel>
+                                                    <FormLabel className="text-[10px] font-black uppercase tracking-widest opacity-60">Monthly Base Rent (₹)</FormLabel>
                                                     <FormControl>
-                                                        <Input type="number" {...field} />
+                                                        <div className="relative">
+                                                            <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-gray-400">₹</span>
+                                                            <Input type="number" {...field} className="rounded-2xl bg-gray-50/50 dark:bg-white/5 border-gray-100 dark:border-white/10 h-12 pl-8 pr-4 focus:ring-primary/20" />
+                                                        </div>
                                                     </FormControl>
-                                                    <FormMessage />
+                                                    <FormMessage className="text-[10px]" />
                                                 </FormItem>
                                             )}
                                         />
                                     </div>
+                                </CardContent>
+                            </Card>
 
-                                    <div className="grid grid-cols-2 gap-4">
+                            <Card className="glass-card border-none rounded-[2.5rem] overflow-hidden shadow-none">
+                                <CardHeader className="p-10 pb-0">
+                                    <div className="flex items-center justify-between">
+                                        <CardTitle className="text-xl font-black flex items-center gap-3">
+                                            <div className="p-2 rounded-xl bg-amber-500/10 text-amber-500">
+                                                <AlertTriangle className="h-5 w-5" />
+                                            </div>
+                                            Operational Status
+                                        </CardTitle>
+                                    </div>
+                                </CardHeader>
+                                <CardContent className="p-10 space-y-8">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
                                         <FormField
-                                            control={form.control}
+                                            control={form.control as any}
                                             name="status"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel>Status</FormLabel>
+                                                    <FormLabel className="text-[10px] font-black uppercase tracking-widest opacity-60">Lifecycle Status</FormLabel>
                                                     <Select onValueChange={field.onChange} value={field.value}>
                                                         <FormControl>
-                                                            <SelectTrigger>
+                                                            <SelectTrigger className="rounded-2xl bg-gray-50/50 dark:bg-white/5 border-gray-100 dark:border-white/10 h-12 px-4">
                                                                 <SelectValue placeholder="Select status" />
                                                             </SelectTrigger>
                                                         </FormControl>
-                                                        <SelectContent>
+                                                        <SelectContent className="rounded-2xl border-none shadow-2xl">
                                                             <SelectItem value="vacant">Vacant</SelectItem>
                                                             <SelectItem value="occupied">Occupied</SelectItem>
                                                             <SelectItem value="notice_period">Notice Period</SelectItem>
-                                                            <SelectItem value="under_renovation">Under Renovation</SelectItem>
+                                                            <SelectItem value="under_renovation">Maintenance</SelectItem>
                                                         </SelectContent>
                                                     </Select>
-                                                    <FormDescription className="text-xs text-orange-600 flex gap-1 items-start">
-                                                        <AlertTriangle className="h-3 w-3 mt-0.5 shrink-0" />
-                                                        Use allocation tools instead for Occupied status.
+                                                    <FormDescription className="text-[10px] font-bold text-amber-600 mt-2">
+                                                        Note: Occupancy is typically managed via allocations.
                                                     </FormDescription>
                                                     <FormMessage />
                                                 </FormItem>
                                             )}
                                         />
                                         <FormField
-                                            control={form.control}
+                                            control={form.control as any}
                                             name="condition"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel>Condition</FormLabel>
+                                                    <FormLabel className="text-[10px] font-black uppercase tracking-widest opacity-60">Physical Condition</FormLabel>
                                                     <Select onValueChange={field.onChange} value={field.value}>
                                                         <FormControl>
-                                                            <SelectTrigger>
+                                                            <SelectTrigger className="rounded-2xl bg-gray-50/50 dark:bg-white/5 border-gray-100 dark:border-white/10 h-12 px-4">
                                                                 <SelectValue placeholder="Select condition" />
                                                             </SelectTrigger>
                                                         </FormControl>
-                                                        <SelectContent>
-                                                            <SelectItem value="good">Good</SelectItem>
+                                                        <SelectContent className="rounded-2xl border-none shadow-2xl">
+                                                            <SelectItem value="good">Excellent</SelectItem>
                                                             <SelectItem value="needs_repair">Needs Repair</SelectItem>
-                                                            <SelectItem value="under_renovation">Under Renovation</SelectItem>
+                                                            <SelectItem value="under_renovation">Under Reno</SelectItem>
                                                         </SelectContent>
                                                     </Select>
                                                     <FormMessage />
@@ -364,58 +398,43 @@ export default function RoomDetailPage() {
                                     </div>
                                 </CardContent>
                             </Card>
-
-                            {/* Beds summary for PG */}
-                            {room?.beds?.length > 0 && (
-                                <Card>
-                                    <CardHeader>
-                                        <CardTitle className="text-lg">Beds In Room</CardTitle>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <div className="flex flex-wrap gap-2">
-                                            {room.beds.map((bed: any) => (
-                                                <Badge key={bed.id} variant={bed.status === 'occupied' ? 'default' : 'secondary'} className="px-3 py-1">
-                                                    {bed.bedNumber} • <span className="capitalize ml-1">{bed.status}</span>
-                                                </Badge>
-                                            ))}
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            )}
                         </div>
 
-                        <div className="space-y-6">
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="text-lg flex items-center gap-2">
-                                        <CheckCircle2 className="h-5 w-5 text-primary" />
+                        <div className="lg:col-span-1 space-y-8">
+                            <Card className="glass-card border-none rounded-[2.5rem] overflow-hidden shadow-none">
+                                <CardHeader className="p-8 pb-4">
+                                    <CardTitle className="text-xl font-black flex items-center gap-3">
+                                        <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-500">
+                                            <CheckCircle2 className="h-5 w-5" />
+                                        </div>
                                         Amenities
                                     </CardTitle>
                                 </CardHeader>
-                                <CardContent className="space-y-4">
+                                <CardContent className="p-8 pt-0 space-y-4">
                                     {[
-                                        { id: 'ac', label: 'AC' },
-                                        { id: 'wifi', label: 'WiFi' },
-                                        { id: 'attachedBath', label: 'Attached Bath' },
-                                        { id: 'geyser', label: 'Geyser' },
-                                        { id: 'parking', label: 'Parking' },
-                                        { id: 'tv', label: 'TV' },
-                                        { id: 'fridge', label: 'Fridge' },
+                                        { id: 'ac', label: 'Air Conditioning' },
+                                        { id: 'wifi', label: 'Broadband WiFi' },
+                                        { id: 'attachedBath', label: 'Attached Bathroom' },
+                                        { id: 'geyser', label: 'Geyser / Water Heater' },
+                                        { id: 'parking', label: 'Dedicated Parking' },
+                                        { id: 'tv', label: 'Smart TV' },
+                                        { id: 'fridge', label: 'Refrigerator' },
                                         { id: 'washingMachine', label: 'Washing Machine' },
                                     ].map((amenity) => (
                                         <FormField
                                             key={amenity.id}
-                                            control={form.control}
+                                            control={form.control as any}
                                             name={`amenities.${amenity.id}` as any}
                                             render={({ field }) => (
-                                                <FormItem className="flex flex-row items-start space-x-3 space-y-0 p-1">
+                                                <FormItem className="flex items-center space-x-4 space-y-0 p-3 rounded-2xl bg-gray-50/50 dark:bg-white/5 border border-transparent hover:border-emerald-500/20 transition-all cursor-pointer">
                                                     <FormControl>
                                                         <Checkbox
                                                             checked={field.value}
                                                             onCheckedChange={field.onChange}
+                                                            className="rounded-md border-gray-300 dark:border-white/20"
                                                         />
                                                     </FormControl>
-                                                    <FormLabel className="font-normal cursor-pointer">
+                                                    <FormLabel className="flex-1 font-bold text-xs uppercase tracking-widest text-gray-600 dark:text-gray-300 cursor-pointer">
                                                         {amenity.label}
                                                     </FormLabel>
                                                 </FormItem>
@@ -425,12 +444,22 @@ export default function RoomDetailPage() {
                                 </CardContent>
                             </Card>
 
-                            <div className="flex flex-col gap-3 pt-4">
-                                <Button type="submit" className="w-full" disabled={isSaving}>
-                                    {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                    Save Changes
+                            <div className="sticky bottom-10 flex flex-col gap-4 animate-fade-in delay-200">
+                                <Button
+                                    type="submit"
+                                    size="lg"
+                                    className="w-full h-14 rounded-full font-black text-xs uppercase tracking-[0.2em] shadow-2xl transition-all active:scale-95"
+                                    disabled={isSaving}
+                                >
+                                    {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Update Specifications'}
                                 </Button>
-                                <Button type="button" variant="outline" className="w-full" onClick={() => router.back()}>
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="lg"
+                                    className="w-full h-14 rounded-full font-black text-xs uppercase tracking-[0.2em] glass-card border-none"
+                                    onClick={() => router.back()}
+                                >
                                     Cancel
                                 </Button>
                             </div>

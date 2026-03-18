@@ -12,12 +12,17 @@ import {
     Edit,
     Trash2,
     Loader2,
-    ChevronRight
+    ChevronRight,
+    Calendar,
+    Settings2,
+    Activity,
+    Plus,
+    Home
 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
     AlertDialog,
@@ -30,6 +35,7 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { cn } from '@/lib/utils';
 
 export default function BuildingDetailPage() {
     const router = useRouter();
@@ -83,141 +89,174 @@ export default function BuildingDetailPage() {
 
     if (isLoading) {
         return (
-            <div className="flex h-screen items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <div className="flex h-[80vh] items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
+                    <Loader2 className="h-10 w-10 animate-spin text-primary opacity-50" />
+                    <p className="text-sm font-bold uppercase tracking-widest text-muted-foreground animate-pulse">Loading Asset Details</p>
+                </div>
             </div>
         );
     }
 
     return (
-        <div className="space-y-8 max-w-5xl mx-auto">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                    <Button variant="ghost" size="icon" onClick={() => router.push('/buildings')}>
-                        <ArrowLeft className="h-4 w-4" />
+        <div className="space-y-8 max-w-7xl mx-auto px-4 md:px-8 py-6 animate-fade-in">
+            {/* Header Area */}
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                <div className="space-y-4">
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => router.push('/buildings')}
+                        className="group -ml-2 text-muted-foreground hover:text-primary transition-colors"
+                    >
+                        <ArrowLeft className="mr-2 h-4 w-4 group-hover:-translate-x-1 transition-transform" />
+                        Back to Portfolio
                     </Button>
-                    <div>
-                        <h1 className="text-3xl font-bold tracking-tight">{building.name}</h1>
-                        <div className="flex items-center gap-2 text-muted-foreground mt-1">
-                            <MapPin className="h-4 w-4" />
-                            <span>{building.address}</span>
+                    <div className="flex items-center gap-4">
+                        <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20 shadow-[0_0_20px_rgba(59,130,246,0.1)]">
+                            <Building2 className="h-8 w-8 text-primary" />
+                        </div>
+                        <div>
+                            <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-br from-gray-900 to-gray-600 dark:from-white dark:to-white/60 bg-clip-text text-transparent">
+                                {building.name}
+                            </h1>
+                            <div className="flex items-center gap-2 text-muted-foreground mt-1.5 font-medium">
+                                <MapPin className="h-4 w-4 text-primary/60" />
+                                <span>{building.address}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div className="flex items-center gap-2">
-                    <Button variant="outline" asChild>
+
+                <div className="flex items-center gap-3">
+                    <Button variant="outline" asChild className="glass-card hover:bg-white/5 border-white/10">
                         <Link href={`/buildings/${id}/edit`}>
                             <Edit className="mr-2 h-4 w-4" />
-                            Edit
+                            Settings
                         </Link>
                     </Button>
 
                     <AlertDialog>
                         <AlertDialogTrigger asChild>
-                            <Button variant="destructive">
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Delete
+                            <Button variant="outline" className="text-destructive hover:bg-destructive/5 hover:text-destructive border-white/10">
+                                <Trash2 className="h-4 w-4" />
                             </Button>
                         </AlertDialogTrigger>
-                        <AlertDialogContent>
+                        <AlertDialogContent className="glass-card border-white/20">
                             <AlertDialogHeader>
-                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                <AlertDialogTitle>Deactivate Property?</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                    This will deactivate the building. All associated rooms and records will remain but the building won&apos;t be visible in active lists.
+                                    This will mark the building as inactive. Existing records and room data will be preserved but it will no longer appear in your active portfolio.
                                 </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={onDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                                    {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Delete Building'}
+                                <AlertDialogCancel className="bg-white/5 border-white/10 text-white hover:bg-white/10">Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={onDelete} className="bg-destructive text-white hover:bg-destructive/90 transition-all font-bold">
+                                    {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Confirm Deactivation'}
                                 </AlertDialogAction>
                             </AlertDialogFooter>
                         </AlertDialogContent>
                     </AlertDialog>
 
-                    <Button asChild>
+                    <Button asChild className="shadow-lg shadow-primary/20">
                         <Link href={`/buildings/${id}/rooms`}>
-                            Manage Rooms
+                            View Inventory
                             <ChevronRight className="ml-2 h-4 w-4" />
                         </Link>
                     </Button>
                 </div>
             </div>
 
-            <div className="grid gap-6 md:grid-cols-3">
-                {/* Left Column - Stats & Info */}
-                <div className="md:col-span-2 space-y-6">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Building Overview</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                <div className="space-y-1">
-                                    <p className="text-sm text-muted-foreground">Type</p>
-                                    <Badge variant="outline" className="capitalize text-base px-3 py-1">
-                                        {building.type.replace('_', ' ')}
-                                    </Badge>
+            <div className="grid gap-8 lg:grid-cols-12">
+                {/* Main Stats Column */}
+                <div className="lg:col-span-8 space-y-8">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        {[
+                            { label: 'Units', value: '—', icon: Home, color: 'text-primary' },
+                            { label: 'Floors', value: building.totalFloors, icon: Layers, color: 'text-blue-500' },
+                            { label: 'Due Day', value: building.dueDateDay, icon: Calendar, color: 'text-amber-500' },
+                            { label: 'Type', value: building.type.replace('_', ' '), icon: Building2, color: 'text-green-500' },
+                        ].map((stat, i) => (
+                            <div key={i} className="glass-card p-4 space-y-3 relative overflow-hidden group hover:scale-[1.02] transition-all">
+                                <div className={cn("p-2 rounded-lg w-fit", stat.color.replace('text-', 'bg-') + '/10')}>
+                                    <stat.icon className={cn("h-4 w-4", stat.color)} />
                                 </div>
-                                <div className="space-y-1">
-                                    <p className="text-sm text-muted-foreground">Floors</p>
-                                    <p className="text-xl font-semibold flex items-center gap-2">
-                                        <Layers className="h-5 w-5 text-primary" />
-                                        {building.totalFloors}
-                                    </p>
+                                <div>
+                                    <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{stat.label}</p>
+                                    <p className="text-xl font-bold mt-1 group-hover:text-primary transition-colors capitalize">{stat.value}</p>
                                 </div>
-                                <div className="space-y-1">
-                                    <p className="text-sm text-muted-foreground">Rent Due Date</p>
-                                    <p className="text-xl font-semibold flex items-center gap-2">
-                                        <Calendar className="h-5 w-5 text-primary" />
-                                        Day {building.dueDateDay}
-                                    </p>
-                                </div>
-                                <div className="space-y-1">
-                                    <p className="text-sm text-muted-foreground">Rooms</p>
-                                    <p className="text-xl font-semibold flex items-center gap-2">
-                                        <LayoutGrid className="h-5 w-5 text-primary" />
-                                        —
-                                    </p>
+                                <div className="absolute -right-2 -bottom-2 opacity-5 pointer-events-none group-hover:scale-125 transition-transform">
+                                    <stat.icon className="h-16 w-16" />
                                 </div>
                             </div>
-                        </CardContent>
-                    </Card>
+                        ))}
+                    </div>
 
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Penalty Configuration</CardTitle>
+                    <Card className="glass-card border-white/10 overflow-hidden shadow-2xl">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-6 border-b border-white/5">
+                            <div>
+                                <CardTitle className="text-xl font-bold flex items-center gap-2">
+                                    <Settings2 className="h-5 w-5 text-primary" />
+                                    Penalty Policy
+                                </CardTitle>
+                                <CardDescription className="text-xs mt-1">Automated late fee configuration for this property.</CardDescription>
+                            </div>
+                            <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 px-3">
+                                {building.penaltyConfig.dailyAccrual ? 'Active Accrual' : 'Flat Charge'}
+                            </Badge>
                         </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-                                <div className="flex justify-between items-center py-2 border-b">
-                                    <span className="text-muted-foreground font-medium">Grace Period</span>
-                                    <span className="font-semibold">{building.penaltyConfig.gracePeriodDays} Days</span>
+                        <CardContent className="pt-8">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+                                <div className="space-y-1.5 p-4 rounded-2xl bg-white/5 border border-white/5 hover:border-primary/20 transition-colors">
+                                    <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Grace Period</p>
+                                    <p className="text-2xl font-bold">{building.penaltyConfig.gracePeriodDays} Days</p>
+                                    <p className="text-[10px] text-muted-foreground">Before fees are applied</p>
                                 </div>
-                                <div className="flex justify-between items-center py-2 border-b">
-                                    <span className="text-muted-foreground font-medium">Penalty Amount</span>
-                                    <span className="font-semibold">
+                                <div className="space-y-1.5 p-4 rounded-2xl bg-white/5 border border-white/5 hover:border-primary/20 transition-colors">
+                                    <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Penalty Charge</p>
+                                    <p className="text-2xl font-bold">
                                         {building.penaltyConfig.type === 'flat' ? '₹' : ''}
                                         {building.penaltyConfig.amount}
                                         {building.penaltyConfig.type === 'percent' ? '%' : ''}
-                                    </span>
+                                    </p>
+                                    <p className="text-[10px] text-muted-foreground">{building.penaltyConfig.type === 'flat' ? 'One-time fixed fee' : 'Percentage of dues'}</p>
                                 </div>
-                                <div className="flex justify-between items-center py-2 border-b">
-                                    <span className="text-muted-foreground font-medium">Daily Accrual</span>
-                                    <Badge variant={building.penaltyConfig.dailyAccrual ? 'default' : 'secondary'}>
-                                        {building.penaltyConfig.dailyAccrual ? 'Enabled' : 'Disabled'}
+                                <div className="space-y-1.5 p-4 rounded-2xl bg-white/5 border border-white/5 hover:border-primary/20 transition-colors">
+                                    <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Cap Limit</p>
+                                    <p className="text-2xl font-bold">
+                                        {building.penaltyConfig.maxPenalty > 0 ? `₹${building.penaltyConfig.maxPenalty}` : 'None'}
+                                    </p>
+                                    <p className="text-[10px] text-muted-foreground">Maximum accruable amount</p>
+                                </div>
+                            </div>
+
+                            <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="flex items-center justify-between p-4 rounded-xl bg-primary/5 border border-primary/10">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 rounded-full bg-primary/10 text-primary">
+                                            <Activity className="h-4 w-4" />
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-bold text-gray-900 dark:text-white">Daily Accrual</p>
+                                            <p className="text-[10px] text-gray-500">Calculate fees every 24 hours</p>
+                                        </div>
+                                    </div>
+                                    <Badge variant={building.penaltyConfig.dailyAccrual ? 'default' : 'secondary'} className="rounded-md">
+                                        {building.penaltyConfig.dailyAccrual ? 'ON' : 'OFF'}
                                     </Badge>
                                 </div>
-                                <div className="flex justify-between items-center py-2 border-b">
-                                    <span className="text-muted-foreground font-medium">Maximum Penalty</span>
-                                    <span className="font-semibold">
-                                        {building.penaltyConfig.maxPenalty > 0 ? `₹${building.penaltyConfig.maxPenalty}` : 'No Limit'}
-                                    </span>
-                                </div>
-                                <div className="flex justify-between items-center py-2 border-b">
-                                    <span className="text-muted-foreground font-medium">Apply on Total Bill</span>
-                                    <Badge variant={building.penaltyConfig.applyOnTotal ? 'default' : 'secondary'}>
-                                        {building.penaltyConfig.applyOnTotal ? 'Yes' : 'Rent Only'}
+                                <div className="flex items-center justify-between p-4 rounded-xl bg-blue-500/5 border border-blue-500/10">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 rounded-full bg-blue-500/10 text-blue-500">
+                                            <Layers className="h-4 w-4" />
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-bold text-gray-900 dark:text-white">Tax Scope</p>
+                                            <p className="text-[10px] text-gray-500">Apply on total bill amount</p>
+                                        </div>
+                                    </div>
+                                    <Badge variant={building.penaltyConfig.applyOnTotal ? 'default' : 'secondary'} className="rounded-md">
+                                        {building.penaltyConfig.applyOnTotal ? 'FULL' : 'RENT'}
                                     </Badge>
                                 </div>
                             </div>
@@ -225,29 +264,73 @@ export default function BuildingDetailPage() {
                     </Card>
                 </div>
 
-                {/* Right Column - Image & Quick Actions */}
-                <div className="space-y-6">
-                    <Card className="overflow-hidden">
-                        <div className="h-48 bg-gray-100 flex items-center justify-center">
+                {/* Info Column */}
+                <div className="lg:col-span-4 space-y-8">
+                    <div className="glass-card overflow-hidden group shadow-2xl">
+                        <div className="h-56 bg-white/5 flex items-center justify-center relative overflow-hidden">
                             {building.photoUrl ? (
-                                <img src={building.photoUrl} alt={building.name} className="w-full h-full object-cover" />
+                                <img src={building.photoUrl} alt={building.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                             ) : (
-                                <Building2 className="h-16 w-16 text-gray-300" />
+                                <div className="flex flex-col items-center gap-2 opacity-20 group-hover:opacity-40 transition-opacity">
+                                    <Building2 className="h-20 w-20 text-gray-400" />
+                                    <p className="text-[10px] font-bold uppercase tracking-widest">No Property Image</p>
+                                </div>
                             )}
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4">
+                                <Button size="sm" variant="secondary" className="w-full glass-card border-white/20">
+                                    Update Photo
+                                </Button>
+                            </div>
                         </div>
-                        <CardContent className="p-4 text-center">
-                            <p className="text-sm text-muted-foreground">Property Image</p>
-                        </CardContent>
-                    </Card>
+                    </div>
 
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Recent Activity</CardTitle>
+                    <Card className="glass-card border-white/10 shadow-xl">
+                        <CardHeader className="pb-4 border-b border-white/5">
+                            <CardTitle className="text-lg font-bold flex items-center gap-2">
+                                <Activity className="h-4 w-4 text-primary" />
+                                Asset Health
+                            </CardTitle>
                         </CardHeader>
-                        <CardContent>
-                            <p className="text-sm text-center text-muted-foreground py-10">
-                                No recent activity for this building.
-                            </p>
+                        <CardContent className="pt-6">
+                            <div className="space-y-6">
+                                <div className="space-y-2">
+                                    <div className="flex justify-between text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                                        <span>Occupancy</span>
+                                        <span className="text-primary text-sm tracking-normal">—%</span>
+                                    </div>
+                                    <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                                        <div className="h-full bg-primary transition-all duration-1000" style={{ width: '0%' }} />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1 border-l-2 border-primary/20">Quick Navigation</p>
+                                    <div className="grid grid-cols-1 gap-2">
+                                        <Button variant="ghost" className="justify-between group h-11 hover:bg-white/5 px-2" asChild>
+                                            <Link href={`/buildings/${id}/rooms`}>
+                                                <div className="flex items-center gap-3">
+                                                    <div className="p-1.5 rounded-lg bg-primary/10 text-primary">
+                                                        <LayoutGrid className="h-4 w-4" />
+                                                    </div>
+                                                    <span className="font-bold text-sm">Room Inventory</span>
+                                                </div>
+                                                <ChevronRight className="h-4 w-4 text-gray-400 group-hover:translate-x-1 transition-transform" />
+                                            </Link>
+                                        </Button>
+                                        <Button variant="ghost" className="justify-between group h-11 hover:bg-white/5 px-2" asChild>
+                                            <Link href={`/tenants?building=${id}`}>
+                                                <div className="flex items-center gap-3">
+                                                    <div className="p-1.5 rounded-lg bg-green-500/10 text-green-500">
+                                                        <Users className="h-4 w-4" />
+                                                    </div>
+                                                    <span className="font-bold text-sm">Active Tenants</span>
+                                                </div>
+                                                <ChevronRight className="h-4 w-4 text-gray-400 group-hover:translate-x-1 transition-transform" />
+                                            </Link>
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
                         </CardContent>
                     </Card>
                 </div>

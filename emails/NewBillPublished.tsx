@@ -134,7 +134,7 @@ const amountLabel = {
   fontSize: '16px',
   color: '#666666',
   borderBottom: '1px solid #e6e6e6',
-},
+};
 
 const amountValue = {
   padding: '12px',
@@ -142,7 +142,7 @@ const amountValue = {
   fontWeight: '600',
   textAlign: 'right' as const,
   borderBottom: '1px solid #e6e6e6',
-},
+};
 
 const buttonContainer = {
   textAlign: 'center' as const,

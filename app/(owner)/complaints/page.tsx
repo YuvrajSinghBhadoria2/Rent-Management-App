@@ -4,26 +4,39 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
-import { 
-  Wrench, 
-  AlertCircle, 
-  CheckCircle2, 
-  Clock, 
+import {
+  Wrench,
+  AlertCircle,
+  CheckCircle2,
+  Clock,
   Filter,
-  MessageSquare
+  MessageSquare,
+  Users,
+  Building2,
+  Loader2,
+  ChevronRight,
+  ShieldAlert,
+  Calendar,
+  Layers,
+  Search,
+  CheckSquare
 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { cn } from "@/lib/utils";
+import { StatCard } from '@/components/owner/StatCard';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from '@/components/ui/select';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface Complaint {
   id: string;
@@ -49,24 +62,12 @@ const categoryLabels: Record<string, string> = {
   other: 'Other',
 };
 
-const priorityColors: Record<string, string> = {
-  urgent: 'bg-red-100 text-red-800 border-red-200',
-  normal: 'bg-blue-100 text-blue-800 border-blue-200',
-  low: 'bg-gray-100 text-gray-800 border-gray-200',
-};
-
-const statusColors: Record<string, string> = {
-  open: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-  in_progress: 'bg-blue-100 text-blue-800 border-blue-200',
-  resolved: 'bg-green-100 text-green-800 border-green-200',
-  closed: 'bg-gray-100 text-gray-800 border-gray-200',
-};
-
 export default function ComplaintsPage() {
   const router = useRouter();
   const [complaints, setComplaints] = useState<Complaint[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     fetchComplaints();
@@ -84,113 +85,191 @@ export default function ComplaintsPage() {
       }
     } catch (error) {
       console.error('Error fetching complaints:', error);
-      toast.error('Failed to load complaints');
+      toast.error('Failed to load asset maintenance logs');
     } finally {
       setLoading(false);
     }
   }
 
-  const filteredComplaints = filter === 'all' 
-    ? complaints 
-    : complaints.filter(c => c.status === filter);
+  const filteredComplaints = complaints.filter(c => {
+    const matchesStatus = statusFilter === 'all' || c.status === statusFilter;
+    const matchesSearch = c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.tenantName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.buildingName.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesStatus && matchesSearch;
+  });
 
   const openCount = complaints.filter(c => c.status === 'open').length;
   const inProgressCount = complaints.filter(c => c.status === 'in_progress').length;
   const resolvedCount = complaints.filter(c => c.status === 'resolved').length;
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-8 max-w-7xl mx-auto px-4 md:px-8 py-6 animate-fade-in">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
-          <h1 className="text-3xl font-bold">Complaints</h1>
-          <p className="text-muted-foreground">Manage tenant complaints and requests</p>
+          <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-br from-gray-900 to-gray-600 dark:from-white dark:to-white/60 bg-clip-text text-transparent">
+            Issue Tracking
+          </h1>
+          <p className="text-muted-foreground mt-2 font-medium">Manage resident reports and prioritize building maintenance work-orders.</p>
+        </div>
+        <div className="flex items-center gap-3 bg-primary/5 px-4 py-2 rounded-2xl border border-primary/10">
+          <Wrench className="h-4 w-4 text-primary" />
+          <span className="text-[10px] font-bold uppercase tracking-widest text-primary">Ops Control Active</span>
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Open</CardTitle>
-            <AlertCircle className="h-4 w-4 text-yellow-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{openCount}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">In Progress</CardTitle>
-            <Clock className="h-4 w-4 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{inProgressCount}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Resolved</CardTitle>
-            <CheckCircle2 className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{resolvedCount}</div>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <StatCard
+          label="Awaiting Initial Review"
+          value={openCount.toString()}
+          icon={AlertCircle}
+          color="amber"
+          sub="New open tickets requiring triage"
+        />
+        <StatCard
+          label="Active Workorders"
+          value={inProgressCount.toString()}
+          icon={Clock}
+          color="blue"
+          sub="Tickets currently with technicians"
+        />
+        <StatCard
+          label="Closed Records"
+          value={resolvedCount.toString()}
+          icon={CheckCircle2}
+          color="green"
+          sub="Successfully resolved this month"
+        />
       </div>
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>All Complaints</CardTitle>
-            <Select value={filter} onValueChange={setFilter}>
-              <SelectTrigger className="w-[180px]">
-                <Filter className="h-4 w-4 mr-2" />
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All</SelectItem>
-                <SelectItem value="open">Open</SelectItem>
-                <SelectItem value="in_progress">In Progress</SelectItem>
-                <SelectItem value="resolved">Resolved</SelectItem>
-                <SelectItem value="closed">Closed</SelectItem>
-              </SelectContent>
-            </Select>
+      <div className="flex flex-col md:flex-row items-center gap-4 bg-white/5 p-4 rounded-3xl border border-white/5">
+        <div className="relative flex-1 w-full">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-primary transition-colors" />
+          <Input
+            placeholder="Search by issue title, resident, or property..."
+            className="pl-11 h-12 glass-card border-white/10 dark:bg-white/5 focus:border-primary/20 transition-all font-medium"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-full md:w-[220px] h-12 glass-card border-white/10 px-5 rounded-2xl">
+            <div className="flex items-center gap-3">
+              <Filter className="h-4 w-4 text-gray-400" />
+              <SelectValue placeholder="System Triage" />
+            </div>
+          </SelectTrigger>
+          <SelectContent className="glass-card border-white/10 rounded-2xl shadow-2xl">
+            <SelectItem value="all" className="font-bold text-[10px] uppercase tracking-widest">All Workorders</SelectItem>
+            <SelectItem value="open" className="font-bold text-[10px] uppercase tracking-widest text-amber-500">Unassigned / Open</SelectItem>
+            <SelectItem value="in_progress" className="font-bold text-[10px] uppercase tracking-widest text-blue-500">In Progress</SelectItem>
+            <SelectItem value="resolved" className="font-bold text-[10px] uppercase tracking-widest text-emerald-500">Resolved</SelectItem>
+            <SelectItem value="closed" className="font-bold text-[10px] uppercase tracking-widest text-muted-foreground">Archived</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <Card className="glass-card border-white/10 shadow-2xl overflow-hidden pb-8">
+        <CardHeader className="border-b border-white/5 pb-6 bg-white/5">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary/10 text-primary">
+              <Layers className="h-4 w-4" />
+            </div>
+            <div>
+              <CardTitle className="text-xl font-bold">Maintenance Queue</CardTitle>
+              <CardDescription className="text-xs">Prioritized list of all active building escalations.</CardDescription>
+            </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-8 px-4 md:px-10">
           {loading ? (
-            <div className="text-center py-8 text-muted-foreground">Loading...</div>
+            <div className="flex h-60 items-center justify-center">
+              <div className="flex flex-col items-center gap-4">
+                <Loader2 className="h-8 w-8 animate-spin text-primary opacity-50" />
+                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground animate-pulse">Syncing Escalations</p>
+              </div>
+            </div>
           ) : filteredComplaints.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <Wrench className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>No complaints found</p>
+            <div className="flex flex-col items-center justify-center py-24 text-center">
+              <div className="w-20 h-20 rounded-[2.5rem] bg-white/5 flex items-center justify-center mb-6 border border-white/5 shadow-inner opacity-20">
+                <CheckSquare className="h-10 w-10 text-gray-400" />
+              </div>
+              <h3 className="text-xl font-bold tracking-tight uppercase opacity-50">Zero active issues</h3>
+              <p className="text-muted-foreground text-sm mt-1 max-w-xs font-medium italic">Building systems are operating within normal parameters.</p>
             </div>
           ) : (
-            <div className="space-y-4">
-              {filteredComplaints.map((complaint) => (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {filteredComplaints.map((complaint, idx) => (
                 <Link
                   key={complaint.id}
                   href={`/complaints/${complaint.id}`}
-                  className="block p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                  className="group block p-6 rounded-[2rem] bg-white/5 border border-white/5 hover:border-primary/20 transition-all hover:scale-[1.02] relative overflow-hidden"
+                  style={{ animationDelay: `${idx * 100}ms` }}
                 >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium">{complaint.title}</p>
-                        <Badge className={priorityColors[complaint.priority]}>
-                          {complaint.priority}
-                        </Badge>
-                        <Badge variant="outline" className={statusColors[complaint.status]}>
-                          {complaint.status.replace('_', ' ')}
-                        </Badge>
+                  {/* Priority Indicator Line */}
+                  <div className={cn(
+                    "absolute left-0 top-0 bottom-0 w-1 rounded-full",
+                    complaint.priority === 'urgent' ? "bg-red-500" :
+                      complaint.priority === 'normal' ? "bg-blue-500" :
+                        "bg-gray-500 opacity-20"
+                  )} />
+
+                  <div className="flex items-start justify-between gap-6">
+                    <div className="space-y-4 flex-1">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <p className="text-lg font-bold tracking-tight text-gray-900 dark:text-white group-hover:text-primary transition-colors">{complaint.title}</p>
+                          <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <Badge className={cn(
+                            "rounded-lg px-2 py-0 text-[8px] font-bold uppercase tracking-widest border-none shadow-sm",
+                            complaint.priority === 'urgent' ? "bg-red-500/10 text-red-500" :
+                              complaint.priority === 'normal' ? "bg-blue-500/10 text-blue-500" :
+                                "bg-gray-500/10 text-gray-600"
+                          )}>
+                            {complaint.priority}
+                          </Badge>
+                          <Badge variant="outline" className={cn(
+                            "rounded-lg px-2 py-0 text-[8px] font-bold uppercase tracking-widest border-white/5",
+                            complaint.status === 'open' ? "text-amber-500 bg-amber-500/5" :
+                              complaint.status === 'in_progress' ? "text-blue-500 bg-blue-500/5" :
+                                complaint.status === 'resolved' ? "text-emerald-500 bg-emerald-500/5" :
+                                  "text-muted-foreground bg-white/5"
+                          )}>
+                            {complaint.status.replace('_', ' ')}
+                          </Badge>
+                        </div>
                       </div>
-                      <p className="text-sm text-muted-foreground">
-                        {complaint.tenantName} • {complaint.buildingName} - Room {complaint.roomNumber}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {categoryLabels[complaint.category]} • {format(new Date(complaint.createdAt), 'MMM d, yyyy')}
-                      </p>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="flex items-center gap-2 text-[11px] font-bold text-muted-foreground uppercase tracking-tight">
+                          <Users className="h-3.5 w-3.5 text-primary/40" />
+                          <span className="truncate">{complaint.tenantName}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-[11px] font-bold text-muted-foreground uppercase tracking-tight">
+                          <Building2 className="h-3.5 w-3.5 text-primary/40" />
+                          <span className="truncate">{complaint.buildingName} • {complaint.roomNumber}</span>
+                        </div>
+                      </div>
+
+                      <div className="pt-4 border-t border-white/5 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="h-6 w-6 rounded-lg bg-white/5 flex items-center justify-center">
+                            <MessageSquare className="h-3 w-3 text-muted-foreground" />
+                          </div>
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{categoryLabels[complaint.category]} Escalation</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-[9px] font-bold text-muted-foreground bg-white/5 px-2 py-1 rounded-full uppercase">
+                          <Calendar className="h-3 w-3 opacity-50" />
+                          {format(new Date(complaint.createdAt), 'MMM d')}
+                        </div>
+                      </div>
                     </div>
-                    <MessageSquare className="h-5 w-5 text-muted-foreground" />
+
+                    <div className="h-12 w-12 rounded-2xl bg-white/5 flex items-center justify-center group-hover:bg-primary/10 group-hover:text-primary transition-all border border-white/5 group-hover:border-primary/20">
+                      {complaint.priority === 'urgent' ? <ShieldAlert className="h-6 w-6 text-red-500/50 group-hover:text-red-500 transition-colors" /> : <Wrench className="h-6 w-6 opacity-20 group-hover:opacity-100" />}
+                    </div>
                   </div>
                 </Link>
               ))}
@@ -198,6 +277,19 @@ export default function ComplaintsPage() {
           )}
         </CardContent>
       </Card>
+
+      <div className="p-8 glass-card border-white/10 bg-primary/5 rounded-[3rem] flex flex-col md:flex-row items-center gap-8 justify-between">
+        <div className="flex items-center gap-6">
+          <div className="w-16 h-16 rounded-[2rem] bg-white/5 flex items-center justify-center border border-white/5 shadow-inner">
+            <MessageSquare className="h-8 w-8 text-primary opacity-50" />
+          </div>
+          <div>
+            <h3 className="text-xl font-bold">Standardize your responses</h3>
+            <p className="text-sm text-muted-foreground mt-1 max-w-sm">Define template responses for common issues like plumbing or internet outages to speed up resolution.</p>
+          </div>
+        </div>
+        <Button variant="outline" className="h-11 px-8 rounded-2xl font-bold text-[10px] uppercase tracking-widest glass-card border-white/10">Configure Templates</Button>
+      </div>
     </div>
   );
 }
