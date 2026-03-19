@@ -4,48 +4,50 @@
 
 @layer base {
   :root {
+    /* Black & White Theme - Light Mode */
     --background: 0 0% 100%;
-    --foreground: 224 71.4% 4.1%;
+    --foreground: 0 0% 0%;
     --card: 0 0% 100%;
-    --card-foreground: 224 71.4% 4.1%;
+    --card-foreground: 0 0% 0%;
     --popover: 0 0% 100%;
-    --popover-foreground: 224 71.4% 4.1%;
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
+    --popover-foreground: 0 0% 0%;
+    --primary: 0 0% 0%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 9%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
+    --accent: 0 0% 96%;
+    --accent-foreground: 0 0% 9%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 0 0% 0%;
     --radius: 1rem;
   }
 
   .dark {
-    --background: 240 10% 4%;
-    --foreground: 0 0% 98%;
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 217.2 91.2% 59.8%;
+    /* Black & White Theme - Dark Mode */
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
+    --card: 0 0% 5%;
+    --card-foreground: 0 0% 100%;
+    --popover: 0 0% 5%;
+    --popover-foreground: 0 0% 100%;
+    --primary: 0 0% 100%;
+    --primary-foreground: 0 0% 0%;
+    --secondary: 0 0% 10%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 0 0% 10%;
+    --muted-foreground: 0 0% 60%;
+    --accent: 0 0% 10%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 15%;
+    --input: 0 0% 15%;
+    --ring: 0 0% 100%;
   }
 }
 
@@ -54,25 +56,233 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground antialiased selection:bg-primary/30;
+    @apply bg-background text-foreground antialiased selection:bg-foreground selection:text-background;
   }
 }
 
+/* ===========================================
+   FROSTED GLASS DARK THEME UTILITIES
+   =========================================== */
+
 @layer components {
-  .glass-card {
-    @apply bg-white/5 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.37)];
-  }
   
-  .glass-morphism {
-    @apply backdrop-blur-md bg-opacity-20 border border-opacity-20;
+  /* === Glass Cards === */
+  .glass-card {
+    @apply bg-white/[0.03] dark:bg-white/[0.03] backdrop-blur-xl border border-white/[0.08] dark:border-white/[0.08];
+    box-shadow: 
+      0 8px 32px rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
   }
 
-  .mesh-gradient {
-    background-color: hsla(240,10%,4%,1);
-    background-image:
-      radial-gradient(at 0% 0%, hsla(221,83%,53%,0.15) 0px, transparent 50%),
-      radial-gradient(at 100% 0%, hsla(280,65%,60%,0.1) 0px, transparent 50%),
-      radial-gradient(at 100% 100%, hsla(221,83%,53%,0.15) 0px, transparent 50%),
-      radial-gradient(at 0% 100%, hsla(280,65%,60%,0.1) 0px, transparent 50%);
+  .glass-card-hover {
+    @apply glass-card transition-all duration-300;
+  }
+
+  .glass-card-hover:hover {
+    @apply bg-white/[0.06] dark:bg-white/[0.06] border-white/[0.12] dark:border-white/[0.12];
+    box-shadow: 
+      0 12px 40px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+
+  /* === Glass Inputs === */
+  .glass-input {
+    @apply bg-white/[0.03] dark:bg-white/[0.03] backdrop-blur-md border border-white/[0.08] dark:border-white/[0.08] text-white dark:text-white placeholder:text-white/40 dark:placeholder:text-white/40;
+    @apply focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-white/20;
+    @apply transition-all duration-200;
+  }
+
+  .glass-input:hover {
+    @apply border-white/[0.12] dark:border-white/[0.12];
+  }
+
+  /* === Glass Buttons === */
+  .glass-button {
+    @apply bg-white/[0.05] dark:bg-white/[0.05] backdrop-blur-md border border-white/[0.1] dark:border-white/[0.1] text-white dark:text-white;
+    @apply hover:bg-white/[0.1] dark:hover:bg-white/[0.1] hover:border-white/[0.15] dark:hover:border-white/[0.15];
+    @apply transition-all duration-200;
+  }
+
+  .glass-button-solid {
+    @apply bg-white dark:bg-white text-black dark:text-black;
+    @apply hover:bg-white/90 dark:hover:bg-white/90;
+    @apply transition-all duration-200;
+  }
+
+  /* === Glass Navigation === */
+  .glass-nav {
+    @apply bg-black/[0.4] dark:bg-black/[0.4] backdrop-blur-xl border-b border-white/[0.05] dark:border-white/[0.05];
+  }
+
+  /* === Glass Sidebar === */
+  .glass-sidebar {
+    @apply bg-black/[0.5] dark:bg-black/[0.5] backdrop-blur-xl border-r border-white/[0.05] dark:border-white/[0.05];
+  }
+
+  /* === Glass Dialogs/Modals === */
+  .glass-dialog {
+    @apply bg-black/[0.7] dark:bg-black/[0.7] backdrop-blur-2xl border border-white/[0.1] dark:border-white/[0.1];
+    box-shadow: 
+      0 25px 50px -12px rgba(0, 0, 0, 0.5),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+
+  /* === Glass Dropdowns === */
+  .glass-dropdown {
+    @apply bg-black/[0.8] dark:bg-black/[0.8] backdrop-blur-xl border border-white/[0.08] dark:border-white/[0.08];
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+  }
+
+  /* === Glass Tooltips === */
+  .glass-tooltip {
+    @apply bg-black/[0.9] dark:bg-black/[0.9] backdrop-blur-lg border border-white/[0.1] dark:border-white/[0.1] text-white dark:text-white;
+  }
+
+  /* === Frosted Background === */
+  .frosted-bg {
+    position: relative;
+  }
+
+  .frosted-bg::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: 
+      radial-gradient(ellipse at 20% 0%, rgba(255, 255, 255, 0.05) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 100%, rgba(255, 255, 255, 0.03) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: -1;
+  }
+
+  /* === Noise Texture Overlay === */
+  .noise-overlay::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    opacity: 0.03;
+    pointer-events: none;
+    mix-blend-mode: overlay;
+  }
+
+  /* === Gradient Borders === */
+  .gradient-border {
+    position: relative;
+    background: linear-gradient(var(--background), var(--background)) padding-box,
+                linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05)) border-box;
+    border: 1px solid transparent;
+  }
+
+  .gradient-border-hover {
+    position: relative;
+    background: linear-gradient(var(--background), var(--background)) padding-box,
+                linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.1)) border-box;
+    border: 1px solid transparent;
+    @apply transition-all duration-300;
+  }
+
+  .gradient-border-hover:hover {
+    background: linear-gradient(var(--background), var(--background)) padding-box,
+                linear-gradient(135deg, rgba(255,255,255,0.3), rgba(255,255,255,0.15)) border-box;
+  }
+
+  /* === Glow Effects === */
+  .glow-white {
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.1), 0 0 40px rgba(255, 255, 255, 0.05);
+  }
+
+  .glow-white-strong {
+    box-shadow: 0 0 30px rgba(255, 255, 255, 0.15), 0 0 60px rgba(255, 255, 255, 0.08);
+  }
+
+  /* === Inner Glow === */
+  .inner-glow {
+    box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.03);
+  }
+
+  /* === Subtle Separator === */
+  .glass-separator {
+    @apply bg-white/[0.05] dark:bg-white/[0.05];
+  }
+
+  /* === Hover Lift Effect === */
+  .hover-lift {
+    @apply transition-all duration-300;
+  }
+
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  }
+
+  /* === Focus Ring (White) === */
+  .focus-ring-white {
+    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background;
+  }
+
+  /* === Scrollbar Styling === */
+  .glass-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .glass-scrollbar::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  .glass-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-white/10 rounded-full;
+  }
+
+  .glass-scrollbar::-webkit-scrollbar-thumb:hover {
+    @apply bg-white/20;
+  }
+}
+
+/* ===========================================
+   ANIMATIONS
+   =========================================== */
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@layer utilities {
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  .animate-pulse-glow {
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+
+  .animate-shimmer {
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.05) 50%,
+      transparent 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
+  }
+
+  /* === Text Utilities === */
+  .text-gradient-white {
+    @apply bg-gradient-to-r from-white via-white/90 to-white/70 bg-clip-text text-transparent;
+  }
+
+  .text-gradient-mono {
+    @apply bg-gradient-to-r from-white via-gray-400 to-white bg-clip-text text-transparent;
   }
 }
