@@ -1,0 +1,71 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Helper function to check allowed file types
+    function isAllowedFileType() {
+      return request.resource.contentType.matches('image/.*')
+        || request.resource.contentType == 'application/pdf';
+    }
+    
+    // Helper function to check file size (max 20MB)
+    function isAllowedFileSize() {
+      return request.resource.size < 20 * 1024 * 1024;
+    }
+    
+    // Profile photos - any authenticated user
+    match /profile-photos/{userId}/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() 
+        && request.auth.uid == userId
+        && isAllowedFileType()
+        && isAllowedFileSize();
+    }
+    
+    // ID documents - owner only
+    match /id-documents/{userId}/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated()
+        && request.auth.uid == userId
+        && request.resource.contentType == 'application/pdf'
+        && request.resource.size < 5 * 1024 * 1024;
+    }
+    
+    // Room photos - owner only
+    match /room-photos/{buildingId}/{roomId}/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated()
+        && isAllowedFileType()
+        && isAllowedFileSize();
+    }
+    
+    // Building photos - owner only
+    match /building-photos/{buildingId}/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated()
+        && isAllowedFileType()
+        && isAllowedFileSize();
+    }
+    
+    // Complaint attachments - tenant and owner
+    match /complaint-attachments/{complaintId}/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated()
+        && isAllowedFileType()
+        && request.resource.size < 20 * 1024 * 1024;
+    }
+    
+    // Lease documents
+    match /lease-documents/{leaseId}/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated()
+        && request.resource.contentType == 'application/pdf'
+        && request.resource.size < 10 * 1024 * 1024;
+    }
+  }
+}
